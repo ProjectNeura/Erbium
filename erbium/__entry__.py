@@ -26,7 +26,7 @@ def __entry__() -> None:
             if not exists(args.output):
                 raise FileNotFoundError(f"Output directory not found: {args.output}")
             commands = [
-                "docker", "run", "--ipc=host", "-v", f"{args.input}:/workspace/input:ro", "-v",
+                "docker", "run", "--ipc=host", "--gpus", "all", "-v", f"{args.input}:/workspace/input:ro", "-v",
                 f"{args.output}:/workspace/output", target
             ]
             if args.temporary:
