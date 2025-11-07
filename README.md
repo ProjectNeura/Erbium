@@ -13,11 +13,11 @@ pip install git+https://github.com/ProjectNeura/Erbium
 Write your dependencies in "docker/app/requirements.txt" and your main script in "docker/app/main.py".
 
 ```shell
-erbium pack -v test
+erbium pack -v test -t docker
 ```
 
 ## Run
 
 ```shell
-erbium run --temporary -i "/Volumes/Portable/SharedDatasets" -o "/Volumes/Portable/SharedWeights/Erbium" -t erbium:test
+erbium run --temporary -i "/Volumes/Portable/SharedDatasets" -o "/Volumes/Portable/SharedWeights/Erbium" -v test
 ```
