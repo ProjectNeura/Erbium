@@ -27,8 +27,9 @@ def __entry__() -> None:
             if not exists(args.output):
                 raise FileNotFoundError(f"Output directory not found: {args.output}")
             commands = [
-                "docker", "run", "--ipc=host", "--gpus", args.gpus, "-v", f"{args.input}:/workspace/input:ro", "-v",
-                f"{args.output}:/workspace/output", f"erbium:{version}"
+                "docker", "run", "--ipc=host", "--ulimit", "memlock=-1", "--ulimit", "stack=67108864", "--gpus",
+                args.gpus, "-v", f"{args.input}:/workspace/input:ro", "-v", f"{args.output}:/workspace/output",
+                f"erbium:{version}"
             ]
             if args.temporary:
                 commands.insert(3, "--rm")
