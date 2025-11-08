@@ -12,6 +12,7 @@ def __entry__() -> None:
     parser.add_argument("-o", "--output", default="P:/SharedWeights/Erbium", help="path to shared weights")
     parser.add_argument("--temporary", action="store_true", help="remove container after execution")
     parser.add_argument("-t", "--target", default=None, help="path to target directory")
+    parser.add_argument("--gpus", default="all", help="available GPUs")
     args = parser.parse_args()
     match args.action:
         case "pack":
@@ -26,7 +27,7 @@ def __entry__() -> None:
             if not exists(args.output):
                 raise FileNotFoundError(f"Output directory not found: {args.output}")
             commands = [
-                "docker", "run", "--ipc=host", "--gpus", "all", "-v", f"{args.input}:/workspace/input:ro", "-v",
+                "docker", "run", "--ipc=host", "--gpus", args.gpus, "-v", f"{args.input}:/workspace/input:ro", "-v",
                 f"{args.output}:/workspace/output", f"erbium:{version}"
             ]
             if args.temporary:
