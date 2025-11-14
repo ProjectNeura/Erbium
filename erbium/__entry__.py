@@ -11,15 +11,14 @@ def __entry__() -> None:
     parser.add_argument("-i", "--input", help="readonly input folder where the datasets are")
     parser.add_argument("-o", "--output", help="writable output folder where the results will be")
     parser.add_argument("--temporary", action="store_true", help="remove container after execution")
-    parser.add_argument("-t", "--target", default=None, help="path to target directory")
+    parser.add_argument("-t", "--target", default="docker", help="path to target directory")
     parser.add_argument("--gpus", default="all", help="available GPUs")
     args = parser.parse_args()
     match args.action:
         case "pack":
-            target = args.target if args.target else "docker"
-            if not exists(f"{target}/Dockerfile"):
+            if not exists(f"{args.target}/Dockerfile"):
                 raise FileNotFoundError(f"Dockerfile not found in {args.target}")
-            run(("docker", "build", "-t", f"erbium:{args.version}", target))
+            run(("docker", "build", "-t", f"erbium:{args.version}", args.target))
         case "run":
             version = args.version if args.version else "latest"
             if not exists(args.input):
