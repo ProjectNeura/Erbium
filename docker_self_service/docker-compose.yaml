@@ -31,6 +31,7 @@ services:
               capabilities: [ gpu ]
     command: >
       sh -lc '
+              python3.12 -m venv /workspace/venv --system-site-packages && . /workspace/venv/bin/activate
               curl -fsSL https://tailscale.com/install.sh | sh
               tailscaled --statedir=${TS_STATE_DIR} --socket=/var/run/tailscale/tailscaled.sock &
               for i in $(seq 1 100); do
