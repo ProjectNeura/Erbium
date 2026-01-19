@@ -1,0 +1,5 @@
+Welcome to Erbium Self Service!
+
+This is part of Project Neura's Internal Computing Platform. Authorized access only.
+
+To report issues, please join #erbium on Slack.
