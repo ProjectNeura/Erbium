@@ -28,6 +28,8 @@ services:
                 --authkey="$(cat /run/secrets/tailscale_authkey)" \
                 --hostname="${HOSTNAME}" \
                 --ssh
+              echo 'alias app="docker exec -it node bash"' >> ~/.bashrc
+              source ~/.bashrc
               wait
             '
   app:
