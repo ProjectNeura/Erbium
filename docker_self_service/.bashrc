@@ -1,0 +1,1 @@
+alias app="docker exec -it node bash"
