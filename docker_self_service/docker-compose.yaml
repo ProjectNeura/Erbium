@@ -3,8 +3,10 @@ services:
     image: tailscale/tailscale:stable
     container_name: ts
     hostname: infra-control
+    secrets:
+      - tailscale_authkey
     environment:
-      - TS_AUTHKEY=tskey-auth-xxxxxxxxxxxxxxxx
+      - TS_AUTHKEY_FILE=/run/secrets/tailscale_authkey
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
     volumes:
