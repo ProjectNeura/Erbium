@@ -36,3 +36,6 @@ services:
     restart: unless-stopped
 volumes:
   ts-state:
+secrets:
+  tailscale_authkey:
+    file: tailscale_authkey.txt

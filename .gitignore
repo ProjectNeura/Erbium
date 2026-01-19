@@ -3,3 +3,4 @@ __pycache__
 build
 *.egg-info
 dist
+docker_self_service/tailscale_authkey.txt
