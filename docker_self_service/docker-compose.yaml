@@ -16,6 +16,19 @@ services:
       - NET_ADMIN
       - SYS_MODULE
     restart: unless-stopped
+    command: >
+      sh -lc '
+              tailscaled --statedir=${TS_STATE_DIR} --socket=/var/run/tailscale/tailscaled.sock &
+              for i in $(seq 1 100); do
+                tailscale status >/dev/null 2>&1 && break
+                sleep 0.2
+              done
+              tailscale up --reset \
+                --authkey="$(cat /run/secrets/tailscale_authkey)" \
+                --hostname="${HOSTNAME}" \
+                --ssh
+              wait
+            '
   app:
     image: nvcr.io/nvidia/pytorch:25.10-py3
     container_name: node
