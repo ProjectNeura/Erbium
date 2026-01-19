@@ -12,7 +12,7 @@ services:
     volumes:
       - ts-state:/var/lib/tailscale
       - /dev/net/tun:/dev/net/tun
-      - ./motd.txt:/etc/motd.txt:ro
+      - ./motd:/etc/motd:ro
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
