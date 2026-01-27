@@ -1,6 +1,6 @@
 services:
   ess:
-    image: nvidia/cuda:13.0-devel-ubuntu24.04
+    image: nvidia/cuda:13.0.0-devel-ubuntu24.04
     hostname: erbium-self-service
     container_name: erbium-self-service
     secrets:
