@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable, Sequence
 from os import PathLike
 from os.path import exists, abspath
 
@@ -10,9 +10,16 @@ __DEFAULT_CONTAINER_NAME__: str = "erbium"
 __DEFAULT_INPUT_DIR__: str = "S:/erbium_input"
 __DEFAULT_OUTPUT_DIR__: str = "S:/erbium_output"
 __DEFAULT_GPU_DRIVER__: str = "nvidia"
-__DEFAULT_GPU_COUNT__: str = "all"
+__DEFAULT_GPUS__: str = "all"
 
-__TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[str], str]]] = {
+
+def _set_gpus(gpus: int | str | Sequence[int]) -> str:
+    if isinstance(gpus, (int, str)):
+        return f"count: {gpus}"
+    return f"device_ids: {list(map(str, gpus))}"
+
+
+__TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
     "service_name": ("SERVICE_NAME", lambda x: x),
     "base_container": (f"image: {__DEFAULT_BASE_CONTAINER__}", lambda x: f"image: {x}"),
     "hostname": (f"hostname: {__DEFAULT_HOSTNAME__}", lambda x: f"hostname: {x}"),
@@ -20,7 +27,7 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[str], str]]] = {
     "input_dir": (f"- {__DEFAULT_INPUT_DIR__}:", lambda x: f"- {x}:"),
     "output_dir": (f"- {__DEFAULT_OUTPUT_DIR__}:", lambda x: f"- {x}:"),
     "gpu_driver": (f"- driver: {__DEFAULT_GPU_DRIVER__}", lambda x: f"- driver: {x}"),
-    "gpu_count": (f"count: {__DEFAULT_GPU_COUNT__}", lambda x: f"count: {x}")
+    "gpus": (f"count: {__DEFAULT_GPUS__}", _set_gpus)
 }
 
 
@@ -28,7 +35,8 @@ def create_docker_compose(service_name: str, *, base_container: str = __DEFAULT_
                           hostname: str = __DEFAULT_HOSTNAME__, container_name: str = __DEFAULT_CONTAINER_NAME__,
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
                           output_dir: str | PathLike[str] = __DEFAULT_OUTPUT_DIR__,
-                          gpu_driver: str = __DEFAULT_GPU_DRIVER__, gpu_count: str = __DEFAULT_GPU_COUNT__) -> str:
+                          gpu_driver: str = __DEFAULT_GPU_DRIVER__,
+                          gpus: int | str | Sequence[int] = __DEFAULT_GPUS__) -> str:
     """
     We believe you are able to understand what these parameters are for by reading the "docker-compose.yaml" file, so
     we won't go into detail here.
@@ -44,18 +52,16 @@ def create_docker_compose(service_name: str, *, base_container: str = __DEFAULT_
     return template
 
 
-def command_to_start_docker_compose(service_name: str, *, in_background: bool = True, force_build: bool = True) -> str:
+def command_to_start_docker_compose(profile_path: str | PathLike[str], service_name: str, *,
+                                    force_build: bool = True) -> str:
     """
     Start the Docker-compose service.
+    :param profile_path: the path to the Docker-compose file
     :param service_name: the name of the service to start
-    :param in_background: whether to run the service in the background
     :param force_build: whether to force rebuild the service
     :return: the command to run
     """
-    cmd = f"docker compose up"
-    if in_background:
-        cmd += " -d"
-    cmd += f" {service_name}"
+    cmd = f"docker compose -f {profile_path} up -d {service_name}"
     if force_build:
         cmd += " --build"
     return cmd

@@ -14,6 +14,7 @@ services:
       - /dev/net/tun:/dev/net/tun
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
+      - ./monitor.cpp:/workspace/monitor.cpp:ro
       - S:/erbium_input:/workspace/input:ro
       - S:/erbium_output:/workspace/output
     cap_add:
@@ -32,19 +33,19 @@ services:
               capabilities: [ gpu ]
     command: >
       sh -lc '
-              python3.12 -m venv /workspace/venv --system-site-packages
-              curl -fsSL https://tailscale.com/install.sh | sh
-              tailscaled --statedir=${TS_STATE_DIR} --socket=/var/run/tailscale/tailscaled.sock &
-              for i in $(seq 1 100); do
-                tailscale status >/dev/null 2>&1 && break
-                sleep 0.2
-              done
-              tailscale up --reset \
-                --authkey="$(cat /run/secrets/tailscale_authkey)" \
-                --hostname="${HOSTNAME}" \
-                --ssh
-              wait
-            '
+      python3.12 -m venv /workspace/venv --system-site-packages
+      g++ -std=c++17 -O2 /workspace/monitor.cpp -lnvidia-ml -o /workspace/monitor
+      chmod +x /workspace/monitor
+      nohup /workspace/monitor > /workspace/monitor.log 2>&1 &
+      curl -fsSL https://tailscale.com/install.sh | sh
+      tailscaled --statedir=${TS_STATE_DIR} --socket=/var/run/tailscale/tailscaled.sock &
+      for i in $(seq 1 100); do
+        tailscale status >/dev/null 2>&1 && break
+        sleep 0.2
+      done
+      tailscale up --reset --authkey="$(cat /run/secrets/tailscale_authkey)" --hostname="${HOSTNAME}" --ssh
+      wait
+      '
     restart: unless-stopped
 volumes:
   ts-state:
