@@ -53,4 +53,9 @@ class JobModel(BaseModel):
 
 @app.post("/schedule_job")
 async def schedule_job(job: JobModel) -> dict[str, Any]:
-    return asdict(runtime.get_scheduler().schedule(Job(job.name, job.requested_gpus, job.requested_run_time_hrs)))
+    try:
+        return asdict(runtime.get_scheduler().schedule(Job(job.name, job.requested_gpus, job.requested_run_time_hrs)))
+    except FileExistsError:
+        return {"error": "duplicated name"}
+    except Exception as e:
+        return {"error": repr(e)}
