@@ -42,7 +42,7 @@ def create_docker_compose(service_name: str, *, base_container: str = __DEFAULT_
     we won't go into detail here.
     :return: the content of the generated Docker-compose file
     """
-    template_path = f"{__DOCKER_DIR__}docker-compose.yaml"
+    template_path = f"{__DOCKER_DIR__}/docker-compose.yaml"
     if not exists(template_path):
         raise FileNotFoundError(f"Docker Compose template {template_path} not found, check your installtion")
     with open(template_path) as f:
