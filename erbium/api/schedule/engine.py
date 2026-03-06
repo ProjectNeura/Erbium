@@ -3,6 +3,7 @@ from json import load
 from os import PathLike, makedirs
 from os.path import exists
 from threading import Lock
+from time import time
 
 from erbium.api.docker import create_docker_compose, command_to_start_docker_compose
 from erbium.api.os import run_command
@@ -27,7 +28,7 @@ class ScheduledJob(object):
     job: Job
     allocated_gpus: set[int]
     assigned_container: Container
-    estimated_wait_time: float
+    estimated_time_to_run: float
 
 
 class Scheduler(object):
@@ -44,25 +45,34 @@ class Scheduler(object):
         self.max_gpu_utilization: float = max_gpu_utilization
         self.max_run_time_hrs: float = max_run_time_hrs
         self._running_containers: dict[str, Container] = {}
-        self._scheduled_containers: dict[str, Container] = {}
+        self._scheduled_jobs: dict[str, ScheduledJob] = {}
         self._gpu_occupancy: dict[int, set[str]] = {}
         self._lock: Lock = Lock()
 
-    def _run_scheduled_container(self, name: str) -> None:
+    def check_scheduled_jobs(self, *, try_running: bool = True) -> int:
+        r = 0
+        for job in self._scheduled_jobs.values():
+            if job.estimated_time_to_run < time():
+                r += 1
+                if try_running:
+                    self.try_run_scheduled_job(job.assigned_container.name)
+        return r
+
+    def _run_scheduled_job(self, name: str) -> None:
         profile_path = f"{self.docker_profile_dir}/{name}.yaml"
         if not exists(profile_path):
             raise ValueError(f"Docker profile {profile_path} not found")
         status = run_command(command_to_start_docker_compose(profile_path, name))
         if status.returncode != 0:
             raise RuntimeError(f"Failed to start container {name}: {status.stderr}")
-        self._running_containers[name] = self._scheduled_containers.pop(name)
+        self._running_containers[name] = self._scheduled_jobs.pop(name).assigned_container
 
-    def try_run_scheduled_container(self, name: str) -> bool:
-        container = self._scheduled_containers.get(name)
+    def try_run_scheduled_job(self, name: str) -> bool:
+        container = self._scheduled_jobs.get(name)
         for gpu in container.job.requested_gpus:
             if not self.is_gpu_available(gpu):
                 return False
-        self._run_scheduled_container(name)
+        self._run_scheduled_job(name)
         return True
 
     def schedule(self, job: Job) -> ScheduledJob:
@@ -86,9 +96,9 @@ class Scheduler(object):
         wait_time = -1
         for gpu in job.requested_gpus:
             if gpu in self._gpu_occupancy:
-                wait_time = max(wait_time, max(
+                wait_time = max(wait_time, self._running_containers[max(
                     self._gpu_occupancy[gpu], key=lambda x: self._running_containers[x].job.requested_run_time_hrs
-                ))
+                )].job.requested_run_time_hrs * 3600)
         # build container
         container = Container(container_name, output_dir, job)
         profile = create_docker_compose(
@@ -96,10 +106,10 @@ class Scheduler(object):
         )
         with open(f"{self.docker_profile_dir}/{container_name}.yaml", "w") as f:
             f.write(profile)
-        self._scheduled_containers[container_name] = container
+        r = self._scheduled_jobs[container_name] = ScheduledJob(job, job.requested_gpus, container, time() + wait_time)
         if wait_time < 0:
-            self.try_run_scheduled_container(container_name)
-        return ScheduledJob(job, job.requested_gpus, container, wait_time)
+            self.try_run_scheduled_job(container_name)
+        return r
 
     def suggest_container_name(self, job: Job) -> str:
         return f"{job.name}-{len(self._running_containers) + 1}"
