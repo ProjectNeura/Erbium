@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os.path import abspath
 from typing import Any
 
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from erbium.api import Scheduler
 
 @dataclass
 class Runtime(object):
+    homepage: str
     scheduler: Scheduler | None = None
 
     def get_scheduler(self) -> Scheduler:
@@ -17,7 +19,7 @@ class Runtime(object):
         raise RuntimeError("Scheduler not initialized")
 
     def running_containers(self) -> dict[str, Any]:
-        return self.scheduler.running_containers
+        return self.get_scheduler().running_containers
 
 
 app: FastAPI = FastAPI(title="LEADS VeC Remote Analyst")
@@ -29,7 +31,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-runtime: Runtime = Runtime()
+runtime: Runtime = Runtime("")
+
+with open(f"{abspath(__file__)[:-6]}assets/index.html") as f:
+    runtime.homepage = f.read()
+
+
+@app.get("/")
+def index() -> str:
+    return runtime.homepage
+
 
 @app.get("/running_containers")
 def get_running_containers() -> dict[str, Any]:
