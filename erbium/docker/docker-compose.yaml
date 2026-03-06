@@ -1,8 +1,8 @@
 services:
-  ess:
+  SERVICE_NAME:
     image: nvidia/cuda:13.0.0-devel-ubuntu24.04
-    hostname: erbium-self-service
-    container_name: erbium-self-service
+    hostname: erbium
+    container_name: erbium
     secrets:
       - tailscale_authkey
     environment:

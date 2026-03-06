@@ -4,15 +4,8 @@ from subprocess import run
 
 
 def __entry__() -> None:
-    parser = ArgumentParser(prog="Erbium CLI", description="Erbium Command Line Interface",
+    parser = ArgumentParser(prog="Erbium", description="Erbium Compute Platform",
                             epilog="GitHub: https://github.com/ProjectNeura/Erbium")
-    parser.add_argument("action", choices=("pack", "run"))
-    parser.add_argument("-v", "--version", default="latest", help="version of Erbium image")
-    parser.add_argument("-i", "--input", help="readonly input folder where the datasets are")
-    parser.add_argument("-o", "--output", help="writable output folder where the results will be")
-    parser.add_argument("--temporary", action="store_true", help="remove container after execution")
-    parser.add_argument("-t", "--target", default="docker", help="path to target directory")
-    parser.add_argument("--gpus", default="all", help="available GPUs")
     args = parser.parse_args()
     match args.action:
         case "pack":
