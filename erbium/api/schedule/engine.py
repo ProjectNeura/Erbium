@@ -57,6 +57,14 @@ class Scheduler(object):
             raise RuntimeError(f"Failed to start container {name}: {status.stderr}")
         self._running_containers[name] = self._scheduled_containers.pop(name)
 
+    def try_run_scheduled_container(self, name: str) -> bool:
+        container = self._scheduled_containers.get(name)
+        for gpu in container.job.requested_gpus:
+            if not self.is_gpu_available(gpu):
+                return False
+        self._run_scheduled_container(name)
+        return True
+
     def schedule(self, job: Job) -> ScheduledJob:
         with self._lock:
             return self._schedule(job)
@@ -88,8 +96,9 @@ class Scheduler(object):
         )
         with open(f"{self.docker_profile_dir}/{container_name}.yaml", "w") as f:
             f.write(profile)
+        self._scheduled_containers[container_name] = container
         if wait_time < 0:
-            self._run_scheduled_container(container_name)
+            self.try_run_scheduled_container(container_name)
         return ScheduledJob(job, job.requested_gpus, container, wait_time)
 
     def suggest_container_name(self, job: Job) -> str:
