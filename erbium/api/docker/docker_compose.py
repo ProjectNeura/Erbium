@@ -3,7 +3,7 @@ from os import PathLike
 from os.path import exists, abspath
 
 
-__DOCKER_DIR__: str = f"{abspath(__file__)[:-28]}docker"
+__DOCKER_DIR__: str = f"{abspath(__file__)[:-28]}docker".replace("\\", "/")
 __DEFAULT_BASE_CONTAINER__: str = "nvidia/cuda:13.0.0-devel-ubuntu24.04"
 __DEFAULT_HOSTNAME__: str = "erbium"
 __DEFAULT_CONTAINER_NAME__: str = "erbium"

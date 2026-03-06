@@ -33,7 +33,9 @@ services:
               capabilities: [ gpu ]
     command: >
       sh -lc '
-      python3.12 -m venv /workspace/venv --system-site-packages
+      apt-get update
+      apt-get install -y curl git python3.12 python3.12-venv
+      python3.12 -m venv /workspace/venv
       g++ -std=c++17 -O2 /workspace/monitor.cpp -lnvidia-ml -o /workspace/monitor
       chmod +x /workspace/monitor
       nohup /workspace/monitor > /workspace/monitor.log 2>&1 &
