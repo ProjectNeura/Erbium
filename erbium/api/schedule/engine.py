@@ -131,3 +131,11 @@ class Scheduler(object):
 
     def is_gpu_available(self, device_id: int) -> bool:
         return device_id not in self._gpu_occupancy or len(self._gpu_occupancy[device_id]) == 0
+
+    @property
+    def running_containers(self) -> dict[str, Container]:
+        return self._running_containers.copy()
+
+    @property
+    def scheduled_jobs(self) -> dict[str, ScheduledJob]:
+        return self._scheduled_jobs.copy()
