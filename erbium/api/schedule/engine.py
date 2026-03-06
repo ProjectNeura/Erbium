@@ -129,8 +129,14 @@ class Scheduler(object):
                     elif gpu_id in self._gpu_occupancy and container.name in self._gpu_occupancy[gpu_id]:
                         self._gpu_occupancy[gpu_id].remove(container.name)
 
+    def list_gpus(self) -> set[int]:
+        return set(self._gpu_occupancy.keys())
+
     def is_gpu_available(self, device_id: int) -> bool:
-        return device_id not in self._gpu_occupancy or len(self._gpu_occupancy[device_id]) == 0
+        return len(self._gpu_occupancy.get(device_id, set())) == 0
+
+    def lookup_containers_using_gpu(self, device_id: int) -> set[str]:
+        return self._gpu_occupancy.get(device_id, set()).copy()
 
     @property
     def running_containers(self) -> dict[str, Container]:
