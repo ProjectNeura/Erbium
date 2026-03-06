@@ -49,6 +49,7 @@ def create_docker_compose(service_name: str, *, base_container: str = __DEFAULT_
         template = f.read()
     for term, (original, replacement) in __TERMS_TO_BE_REPLACED__.items():
         template = template.replace(original, replacement(locals()[term]))
+    template = template.replace("./", f"{__DOCKER_DIR__}/")
     return template
 
 

@@ -51,4 +51,4 @@ volumes:
   ts-state:
 secrets:
   tailscale_authkey:
-    file: tailscale_authkey.txt
+    file: ./tailscale_authkey.txt

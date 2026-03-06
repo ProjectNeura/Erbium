@@ -3,4 +3,4 @@ __pycache__
 build
 *.egg-info
 dist
-erbium/docker/tailscale_authkey.txt
+tailscale_authkey.txt
