@@ -6,7 +6,7 @@ from threading import Lock
 from time import time
 
 from erbium.api.docker import create_docker_compose, command_to_start_docker_compose
-from erbium.api.os import run_command
+from erbium.api.os import run_command, get_gpu_names_and_specs, GPUInfo
 
 
 @dataclass
@@ -46,6 +46,7 @@ class Scheduler(object):
         self.max_run_time_hrs: float = max_run_time_hrs
         self._running_containers: dict[str, Container] = {}
         self._scheduled_jobs: dict[str, ScheduledJob] = {}
+        self._gpu_names_and_specs: dict[int, GPUInfo] = get_gpu_names_and_specs()
         self._gpu_occupancy: dict[int, set[str]] = {}
         self._lock: Lock = Lock()
 
@@ -129,14 +130,14 @@ class Scheduler(object):
                     elif gpu_id in self._gpu_occupancy and container.name in self._gpu_occupancy[gpu_id]:
                         self._gpu_occupancy[gpu_id].remove(container.name)
 
-    def list_gpus(self) -> set[int]:
-        return set(self._gpu_occupancy.keys())
+    def list_gpus(self) -> dict[int, GPUInfo]:
+        r = self._gpu_names_and_specs.copy()
+        for gpu_id, gpu_info in r.items():
+            gpu_info.occupied_by = self._gpu_occupancy.get(gpu_id, set())
+        return r
 
     def is_gpu_available(self, device_id: int) -> bool:
         return len(self._gpu_occupancy.get(device_id, set())) == 0
-
-    def lookup_containers_using_gpu(self, device_id: int) -> set[str]:
-        return self._gpu_occupancy.get(device_id, set()).copy()
 
     @property
     def running_containers(self) -> dict[str, Container]:
