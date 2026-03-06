@@ -21,7 +21,7 @@ class Runtime(object):
         raise RuntimeError("Scheduler not initialized")
 
 
-app: FastAPI = FastAPI(title="LEADS VeC Remote Analyst")
+app: FastAPI = FastAPI(title="Erbium Server")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
