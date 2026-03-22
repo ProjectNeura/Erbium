@@ -14,7 +14,7 @@ services:
       - /dev/net/tun:/dev/net/tun
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
-      - S:/erbium_input:/workspace/input:ro
+      - S:/SharedDatasets:/workspace/input:ro
       - S:/erbium_output:/workspace/output
     cap_add:
       - NET_ADMIN
@@ -32,6 +32,7 @@ services:
               capabilities: [ gpu ]
     command: >
       sh -lc '
+              apt-get update && apt-get install -y curl python3.12 python3.12-venv
               python3.12 -m venv /workspace/venv --system-site-packages
               curl -fsSL https://tailscale.com/install.sh | sh
               tailscaled --statedir=${TS_STATE_DIR} --socket=/var/run/tailscale/tailscaled.sock &
