@@ -32,6 +32,7 @@ services:
               mkdir -p /var/run/sshd /workspace
               python3.12 -m venv /workspace/venv
               echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+              echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
               echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
               /usr/sbin/sshd -D
             '
