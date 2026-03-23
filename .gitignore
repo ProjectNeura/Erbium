@@ -3,4 +3,4 @@ __pycache__
 build
 *.egg-info
 dist
-tailscale_authkey.txt
+tunnel.json
