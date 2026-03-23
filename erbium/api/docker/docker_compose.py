@@ -35,7 +35,7 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
 }
 
 
-def create_docker_compose(service_name: str, *, base_container: str = __DEFAULT_BASE_CONTAINER__,
+def create_docker_compose(service_name: str, ssh_password: str, *, base_container: str = __DEFAULT_BASE_CONTAINER__,
                           hostname: str = __DEFAULT_HOSTNAME__, container_name: str = __DEFAULT_CONTAINER_NAME__,
                           shared_network: str = __DEFAULT_SHARED_NETWORK__,
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
