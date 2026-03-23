@@ -33,16 +33,23 @@ services:
               count: all
               capabilities: [ gpu ]
     command: >
-      sh -lc '
+      bash -lc '
+              set -e
               apt-get update
-              apt-get install -y curl git python3.12 python3.12-venv
-              python3.12 -m venv /workspace/venv
-              apt-get install -y libnvidia-ml-dev
-              g++ -std=c++17 -O2 /workspace/monitor.cpp -lnvidia-ml -o /workspace/monitor
-              chmod +x /workspace/monitor
-              nohup /workspace/monitor > /workspace/monitor.log 2>&1 &
-              wait
-             '
+              DEBIAN_FRONTEND=noninteractive apt-get install -y
+                ca-certificates
+                curl
+                git
+                gnupg
+                openssh-server
+                python3.12
+                python3.12-venv
+              mkdir -p /var/run/sshd /workspace
+              python3.12 -m venv /workspace/venv || true
+              echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+              echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+              /usr/sbin/sshd -D
+            '
     restart: unless-stopped
 volumes:
   ts-state:
