@@ -14,7 +14,6 @@ services:
       - /dev/net/tun:/dev/net/tun
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
-      - ./tunnel.json:/etc/cloudflared/tunnel.json:ro
       - ./monitor.cpp:/workspace/monitor.cpp:ro
       - S:/erbium_input:/workspace/input:ro
       - S:/erbium_output:/workspace/output
