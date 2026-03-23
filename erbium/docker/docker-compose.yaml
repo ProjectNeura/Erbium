@@ -4,8 +4,6 @@ services:
     hostname: erbium
     container_name: erbium
     volumes:
-      - ts-state:/var/lib/tailscale
-      - /dev/net/tun:/dev/net/tun
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       - ./monitor.cpp:/workspace/monitor.cpp:ro
