@@ -36,3 +36,6 @@ services:
               /usr/sbin/sshd -D
             '
     restart: unless-stopped
+networks:
+  labnet:
+    external: true
