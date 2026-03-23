@@ -3,6 +3,8 @@ services:
     image: nvidia/cuda:13.0.0-devel-ubuntu24.04
     hostname: erbium
     container_name: erbium
+    networks:
+      - labnet
     volumes:
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
