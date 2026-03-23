@@ -15,6 +15,7 @@ def __entry__() -> None:
     docker_init.add_argument("-n", "--shared_network", default=__DEFAULT_SHARED_NETWORK__)
     docker_create = docker_sub.add_parser("create")
     docker_create.add_argument("-n", "--service_name", required=True)
+    docker_create.add_argument("-p", "--password", required=True)
     docker_create.add_argument("-b", "--base_container", default=__DEFAULT_BASE_CONTAINER__)
     docker_create.add_argument("input_dir")
     docker_create.add_argument("output_dir")
@@ -42,8 +43,8 @@ def __entry__() -> None:
                 case "create":
                     with open(args.save_as, "w") as f:
                         f.write(create_docker_compose(
-                            args.service_name, base_container=args.base_container, input_dir=args.input_dir,
-                            output_dir=args.output_dir
+                            args.service_name, args.password, base_container=args.base_container,
+                            input_dir=args.input_dir, output_dir=args.output_dir
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(
