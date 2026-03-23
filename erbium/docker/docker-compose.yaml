@@ -29,7 +29,7 @@ services:
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv
               mkdir -p /var/run/sshd /workspace
-              python3.12 -m venv /workspace/venv || true
+              python3.12 -m venv /workspace/venv
               echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
               echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
               /usr/sbin/sshd -D
