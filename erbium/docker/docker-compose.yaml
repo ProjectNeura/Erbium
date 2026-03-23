@@ -28,7 +28,7 @@ services:
       bash -lc '
               set -e
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv libnvidia-ml-dev
+              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv
               mkdir -p /var/run/sshd /workspace
               python3.12 -m venv /workspace/venv
               g++ -std=c++17 -O2 /workspace/monitor.cpp /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 /usr/include/nvml.h -o /workspace/monitor
