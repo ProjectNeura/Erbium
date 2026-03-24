@@ -16,3 +16,37 @@ simply fork this repository and replace the driver-related code with your own.
 ```shell
 pip install git+https://github.com/ProjectNeura/Erbium
 ```
+
+## Create a Docker Compose File
+
+```shell
+python -m docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR SAVE_AS
+```
+
+## Initialize the Control Server
+
+### Install `cloudflared`
+
+#### Windows
+
+```shell
+winget install --id Cloudflare.cloudflared
+```
+
+#### Linux
+
+```shell
+sudo mkdir -p --mode=0755 /usr/share/keyrings
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared noble main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt-get update
+sudo apt-get install cloudflared
+```
+
+### Start Reverse Proxy
+
+```shell
+cloudflared tunnel login
+cloudflared tunnel create ErbiumControl
+cloudflared tunnel run ErbiumControl
+```
