@@ -28,10 +28,11 @@ services:
               set -e
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv tmux vim
-              mkdir -p /var/run/sshd /workspace
+              mkdir -p /var/run/sshd /workspace/app
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
-              chown -R access:access /workspace
+              chown -R access:access /workspace/app
+              chown -R access:access /workspace/output
               python3.12 -m venv /workspace/venv
               /workspace/venv/bin/pip install torch torchvision jupyterlab
               echo "PermitRootLogin no" >> /etc/ssh/sshd_config
