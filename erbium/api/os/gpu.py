@@ -9,7 +9,6 @@ from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvm
 class GPUInfo(object):
     device_id: int
     name: str
-    occupied_by: set[str]
     utilization_percent: float
     memory_utilization_percent: float
     power_draw_w: float
@@ -19,7 +18,7 @@ class GPUInfo(object):
     fan_speed_percent: float
 
 
-def get_gpu_names_and_specs() -> dict[int, GPUInfo]:
+def get_all_gpu_info() -> dict[int, GPUInfo]:
     r = {}
     nvmlInit()
     device_count = nvmlDeviceGetCount()
@@ -27,7 +26,7 @@ def get_gpu_names_and_specs() -> dict[int, GPUInfo]:
         handle = nvmlDeviceGetHandleByIndex(i)
         utilization_rates = nvmlDeviceGetUtilizationRates(handle)
         r[i] = GPUInfo(
-            i, nvmlDeviceGetName(handle), set(), utilization_rates.gpu, utilization_rates.memory,
+            i, nvmlDeviceGetName(handle), utilization_rates.gpu, utilization_rates.memory,
             nvmlDeviceGetPowerUsage(handle) / 1000, nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS),
             nvmlDeviceGetClockInfo(handle, NVML_CLOCK_MEM), nvmlDeviceGetMemoryInfo(handle).total / 1073741824,
             nvmlDeviceGetFanSpeed(handle),

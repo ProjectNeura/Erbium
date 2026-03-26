@@ -29,12 +29,15 @@ services:
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv tmux vim
               mkdir -p /var/run/sshd /workspace
+              id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
+              echo "access:sshpassword" | chpasswd
+              chown -R access:access /workspace
               python3.12 -m venv /workspace/venv
               /workspace/venv/bin/pip install torch torchvision jupyterlab
-              echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+              echo "PermitRootLogin no" >> /etc/ssh/sshd_config
               echo "PubkeyAuthentication no" >> /etc/ssh/sshd_config
               echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
-              echo "root:sshpassword" | chpasswd
+              echo "AllowUsers access" >> /etc/ssh/sshd_config
               /usr/sbin/sshd
               exec /workspace/venv/bin/jupyter lab --no-browser --port=8080 --allow-root --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True
             '

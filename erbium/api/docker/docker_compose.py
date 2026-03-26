@@ -27,7 +27,7 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
     "hostname": (f"hostname: {__DEFAULT_HOSTNAME__}", lambda x: f"hostname: {x}"),
     "container_name": (f"container_name: {__DEFAULT_CONTAINER_NAME__}", lambda x: f"container_name: {x}"),
     "shared_network": (__DEFAULT_SHARED_NETWORK__, lambda x: x),
-    "ssh_password": (f"root:{__DEFAULT_SSH_PASSWORD__}", lambda x: f"root:{x}"),
+    "ssh_password": (f"access:{__DEFAULT_SSH_PASSWORD__}", lambda x: f"access:{x}"),
     "input_dir": (f"- {__DEFAULT_INPUT_DIR__}:", lambda x: f"- {x}:"),
     "output_dir": (f"- {__DEFAULT_OUTPUT_DIR__}:", lambda x: f"- {x}:"),
     "gpu_driver": (f"- driver: {__DEFAULT_GPU_DRIVER__}", lambda x: f"- driver: {x}"),

@@ -3,21 +3,21 @@ from os.path import abspath
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from erbium.api import Scheduler, Job
+from erbium.api import Node, Job, get_all_gpu_info
 
 
 @dataclass
 class Runtime(object):
     homepage: str
-    scheduler: Scheduler | None = None
+    node: Node | None = None
 
-    def get_scheduler(self) -> Scheduler:
-        if self.scheduler:
-            return self.scheduler
+    def get_node(self) -> Node:
+        if self.node:
+            return self.node
         raise RuntimeError("Scheduler not initialized")
 
 
@@ -41,21 +41,35 @@ async def index() -> str:
     return runtime.homepage
 
 
-@app.get("/running_containers")
-async def get_running_containers() -> dict[str, Any]:
-    return {k: asdict(v) for k, v in runtime.get_scheduler().running_containers.items()}
+@app.get("/waitlist")
+async def waitlist() -> dict[str, Any]:
+    return {"wait_time_hrs": runtime.get_node().wait_time_hrs(), "jobs": runtime.get_node().waitlist()}
+
+
+@app.get("/availability")
+async def availability() -> dict[str, Any]:
+    return {info.name: {
+        "available": runtime.get_node().is_available(info), **asdict(info)
+    } for device_id, info in get_all_gpu_info().items()}
 
 
 class JobModel(BaseModel):
     name: str
+    ssh_password: str
     requested_gpus: set[int]
     requested_run_time_hrs: float
 
-@app.post("/schedule_job")
-async def schedule_job(job: JobModel) -> dict[str, Any]:
-    try:
-        return asdict(runtime.get_scheduler().schedule(Job(job.name, job.requested_gpus, job.requested_run_time_hrs)))
-    except FileExistsError:
-        return {"error": "duplicated name"}
-    except Exception as e:
-        return {"error": repr(e)}
+
+@app.post("/join_waitlist")
+async def join_waitlist(job: JobModel) -> None:
+    runtime.get_node().join_waitlist(Job(job.name, job.ssh_password, job.requested_gpus, job.requested_run_time_hrs))
+
+
+class JobQueryModel(BaseModel):
+    name: str
+    ssh_password: str
+
+
+@app.post("/leave_waitlist")
+async def leave_waitlist(job_query: JobQueryModel) -> None:
+    runtime.get_node().leave_waitlist(job_query.name, job_query.ssh_password)
