@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Erbium Waitlist Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --bg-soft: rgba(255, 255, 255, 0.72);
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-strong: rgba(255, 255, 255, 0.92);
+      --line: rgba(15, 23, 42, 0.09);
+      --text: #111827;
+      --muted: #5b6472;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.12);
+      --success: #1f8f5f;
+      --warning: #d97706;
+      --danger: #c2410c;
+      --shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(0, 113, 227, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(118, 190, 255, 0.2), transparent 28%),
+        linear-gradient(180deg, #fbfbfd 0%, #eef1f5 48%, #e8edf3 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page-shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-shell::before,
+    .page-shell::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 32rem;
+      height: 32rem;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-shell::before {
+      top: -12rem;
+      right: -10rem;
+      background: rgba(140, 210, 255, 0.48);
+    }
+
+    .page-shell::after {
+      bottom: -14rem;
+      left: -8rem;
+      background: rgba(185, 220, 255, 0.5);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.64);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+      position: sticky;
+      top: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #0a84ff, #7dd3fc);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    .brand-copy strong,
+    .eyebrow,
+    .card-eyebrow {
+      letter-spacing: -0.02em;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .brand-copy span,
+    .nav,
+    .meta-text,
+    .section-copy,
+    .support-copy,
+    .queue-empty,
+    .footer {
+      color: var(--muted);
+    }
+
+    .brand-copy span {
+      font-size: 0.82rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 18px;
+      font-size: 0.92rem;
+    }
+
+    .nav a {
+      text-decoration: none;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 20px;
+      padding: 28px 0 20px;
+      align-items: stretch;
+    }
+
+    .hero-panel,
+    .glass-card,
+    .support-card,
+    .table-card {
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: var(--panel);
+      backdrop-filter: blur(22px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 34px;
+      border-radius: var(--radius-xl);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      font-size: 0.88rem;
+      color: #324154;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #34c759, #10b981);
+      box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.14);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 18px;
+      max-width: 14ch;
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-copy {
+      margin-top: 18px;
+      max-width: 58ch;
+      font-size: 1.03rem;
+      color: #45505f;
+    }
+
+    .hero-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .point {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+    }
+
+    .point strong {
+      display: block;
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+    }
+
+    .point span {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .hero-aside {
+      padding: 28px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 249, 255, 0.7));
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .status-label {
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #526073;
+    }
+
+    .status-value {
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .status-grid,
+    .metrics-grid,
+    .forms-grid,
+    .support-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .status-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-block {
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .status-note {
+      font-size: 0.93rem;
+      color: var(--muted);
+    }
+
+    .section {
+      padding-top: 16px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+      letter-spacing: -0.04em;
+    }
+
+    .section-copy {
+      max-width: 54ch;
+      font-size: 0.96rem;
+    }
+
+    .metrics-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .glass-card {
+      padding: 22px;
+      border-radius: var(--radius-lg);
+    }
+
+    .card-eyebrow {
+      font-size: 0.85rem;
+      color: #506074;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .metric-caption {
+      margin-top: 10px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .forms-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .form-card {
+      padding: 26px;
+      border-radius: var(--radius-xl);
+    }
+
+    .form-card h3 {
+      font-size: 1.65rem;
+      letter-spacing: -0.04em;
+    }
+
+    .form-copy {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-size: 0.93rem;
+      color: #314154;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+      font: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: rgba(0, 113, 227, 0.42);
+      box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .gpu-picker {
+      display: grid;
+      gap: 10px;
+    }
+
+    .gpu-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .gpu-chip {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 15px;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255, 255, 255, 0.86);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .gpu-chip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .gpu-chip input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    .gpu-meta strong {
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .gpu-meta span,
+    .help-line,
+    .support-list li,
+    .queue-table td,
+    .queue-table th {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .gpu-status {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .gpu-status.available,
+    .badge.available {
+      background: rgba(31, 143, 95, 0.12);
+      color: var(--success);
+    }
+
+    .gpu-status.busy,
+    .badge.busy {
+      background: rgba(217, 119, 6, 0.14);
+      color: var(--warning);
+    }
+
+    .help-line {
+      margin-top: -4px;
+    }
+
+    button {
+      width: fit-content;
+      min-width: 170px;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0071e3, #3b82f6);
+      color: white;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 18px 34px rgba(0, 113, 227, 0.24);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 40px rgba(0, 113, 227, 0.28);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.72;
+      transform: none;
+    }
+
+    .secondary-button {
+      background: linear-gradient(135deg, #374151, #111827);
+      box-shadow: 0 18px 34px rgba(17, 24, 39, 0.2);
+    }
+
+    .feedback {
+      min-height: 24px;
+      font-size: 0.93rem;
+    }
+
+    .feedback.success {
+      color: var(--success);
+    }
+
+    .feedback.error {
+      color: var(--danger);
+    }
+
+    .feedback.info {
+      color: #315a88;
+    }
+
+    .support-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .support-card,
+    .table-card {
+      padding: 24px;
+      border-radius: var(--radius-xl);
+    }
+
+    .support-card h3 {
+      font-size: 1.2rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+    }
+
+    .support-copy {
+      font-size: 0.94rem;
+    }
+
+    .support-list {
+      margin: 16px 0 0;
+      padding-left: 18px;
+    }
+
+    .table-card {
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .queue-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+
+    .queue-table th,
+    .queue-table td {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .queue-table th {
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .queue-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .queue-empty {
+      padding: 18px 0 4px;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 66px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 28px 2px 0;
+      font-size: 0.88rem;
+    }
+
+    .fade-up {
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .fade-up.delay-1 {
+      animation-delay: 0.08s;
+    }
+
+    .fade-up.delay-2 {
+      animation-delay: 0.16s;
+    }
+
+    .fade-up.delay-3 {
+      animation-delay: 0.24s;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .forms-grid,
+      .support-grid,
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-points,
+      .status-grid,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-heading,
+      .footer,
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        width: min(100% - 20px, 1180px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .hero-panel,
+      .hero-aside,
+      .glass-card,
+      .support-card,
+      .table-card,
+      .form-card {
+        border-radius: 24px;
+      }
+
+      .hero-panel,
+      .hero-aside,
+      .glass-card,
+      .support-card,
+      .table-card,
+      .form-card {
+        padding: 22px;
+      }
+
+      h1 {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="container">
+      <header class="topbar fade-up">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <strong>Erbium</strong>
+            <span>Waitlist operations dashboard</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Sections">
+          <a href="#overview">Overview</a>
+          <a href="#join">Join</a>
+          <a href="#leave">Leave</a>
+          <a href="#support">Support</a>
+        </nav>
+      </header>
+
+      <section class="hero" id="overview">
+        <div class="hero-panel fade-up delay-1">
+          <div class="eyebrow">Live scheduler visibility</div>
+          <h1>Join or leave the queue with full context before you commit.</h1>
+          <p class="hero-copy">
+            This dashboard shows current GPU availability, total projected wait time, active queue depth,
+            and the exact details required to submit or remove a reservation. Join with a job name, SSH password,
+            GPU selection, and requested runtime. Leave with the same job name and password.
+          </p>
+          <div class="hero-points">
+            <div class="point">
+              <strong>What you need</strong>
+              <span>Job name, SSH password, requested GPUs, and planned runtime in hours.</span>
+            </div>
+            <div class="point">
+              <strong>How removal works</strong>
+              <span>Only queued jobs can be removed, and credentials must match exactly.</span>
+            </div>
+            <div class="point">
+              <strong>What updates live</strong>
+              <span>Queue length, total wait estimate, and per-GPU availability refresh automatically.</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-aside fade-up delay-2" aria-label="System status">
+          <div>
+            <div class="status-label">Estimated wait</div>
+            <div class="status-value" id="heroWaitTime">--</div>
+          </div>
+          <div class="status-grid">
+            <div class="status-block">
+              <div class="status-label">Queued jobs</div>
+              <div class="status-value" id="heroQueueDepth">--</div>
+            </div>
+            <div class="status-block">
+              <div class="status-label">Available GPUs</div>
+              <div class="status-value" id="heroAvailableGpus">--</div>
+            </div>
+          </div>
+          <p class="status-note" id="lastUpdated">Refreshing live data...</p>
+        </aside>
+      </section>
+
+      <section class="section">
+        <div class="section-heading fade-up">
+          <div>
+            <h2 class="section-title">Operational snapshot</h2>
+            <p class="section-copy">
+              Use these metrics to decide whether to join now, request fewer GPUs, or remove a queued request.
+            </p>
+          </div>
+        </div>
+        <div class="metrics-grid">
+          <article class="glass-card fade-up delay-1">
+            <div class="card-eyebrow">Total wait estimate</div>
+            <div class="metric-value" id="metricWaitTime">--</div>
+            <div class="metric-caption">Combined remaining runtime across queued work.</div>
+          </article>
+          <article class="glass-card fade-up delay-2">
+            <div class="card-eyebrow">Queue depth</div>
+            <div class="metric-value" id="metricQueueDepth">--</div>
+            <div class="metric-caption">Current number of jobs waiting for scheduling.</div>
+          </article>
+          <article class="glass-card fade-up delay-3">
+            <div class="card-eyebrow">Ready GPUs</div>
+            <div class="metric-value" id="metricReadyGpus">--</div>
+            <div class="metric-caption">Devices currently under the availability threshold.</div>
+          </article>
+          <article class="glass-card fade-up delay-3">
+            <div class="card-eyebrow">Cluster inventory</div>
+            <div class="metric-value" id="metricTotalGpus">--</div>
+            <div class="metric-caption">Total GPU devices visible to the dashboard.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section forms-grid">
+        <article class="glass-card form-card fade-up" id="join">
+          <div class="eyebrow">Join the waitlist</div>
+          <h3>Submit a new reservation</h3>
+          <p class="form-copy">
+            Provide the exact runtime you expect to use. The queue estimate is additive, so shorter and more precise
+            runtimes improve the schedule for everyone.
+          </p>
+
+          <form id="joinForm">
+            <div class="field-grid">
+              <label>
+                Job name
+                <input id="joinName" name="name" type="text" autocomplete="off" placeholder="vision-train-a100" required />
+              </label>
+              <label>
+                SSH password
+                <input id="joinPassword" name="ssh_password" type="password" autocomplete="new-password" placeholder="Required for access removal" required />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                Requested runtime (hours)
+                <input id="joinRuntime" name="requested_run_time_hrs" type="number" min="0.25" step="0.25" placeholder="4" required />
+              </label>
+              <div class="gpu-picker">
+                <span>GPU selection</span>
+                <div class="help-line">Choose one or more GPU devices. Available devices are marked live.</div>
+              </div>
+            </div>
+
+            <div class="gpu-list" id="gpuList" aria-live="polite"></div>
+            <div class="help-line">Support note: the same SSH password is required later if you need to remove this request from the queue.</div>
+            <button id="joinButton" type="submit">Join waitlist</button>
+            <div class="feedback info" id="joinFeedback">Waiting for live scheduler data...</div>
+          </form>
+        </article>
+
+        <article class="glass-card form-card fade-up delay-1" id="leave">
+          <div class="eyebrow">Leave the waitlist</div>
+          <h3>Remove a queued reservation</h3>
+          <p class="form-copy">
+            Removal only affects jobs still waiting in the queue. If the job name or password does not match a queued
+            entry, the reservation will remain untouched.
+          </p>
+
+          <form id="leaveForm">
+            <label>
+              Job name
+              <input id="leaveName" name="name" type="text" autocomplete="off" placeholder="vision-train-a100" required />
+            </label>
+            <label>
+              SSH password
+              <input id="leavePassword" name="ssh_password" type="password" autocomplete="current-password" placeholder="Must match the queued job" required />
+            </label>
+            <div class="help-line">Support note: queued entries are removed by exact `name` and `ssh_password` match.</div>
+            <button id="leaveButton" class="secondary-button" type="submit">Leave waitlist</button>
+            <div class="feedback info" id="leaveFeedback">Use the same credentials you submitted during join.</div>
+          </form>
+        </article>
+      </section>
+
+      <section class="section" id="support">
+        <div class="section-heading fade-up">
+          <div>
+            <h2 class="section-title">Support guidance</h2>
+            <p class="section-copy">
+              These notes cover the most common join and leave issues without requiring a separate runbook.
+            </p>
+          </div>
+        </div>
+
+        <div class="support-grid">
+          <article class="support-card fade-up delay-1">
+            <h3>Before you join</h3>
+            <p class="support-copy">Confirm you only request the GPUs you need and set a realistic runtime window.</p>
+            <ul class="support-list">
+              <li>Shorter runtime requests reduce total wait time for the rest of the queue.</li>
+              <li>Available GPU badges are informational; your job is still placed into the scheduler queue.</li>
+              <li>Use a memorable job name so you can identify and remove the request later if plans change.</li>
+            </ul>
+          </article>
+
+          <article class="support-card fade-up delay-2">
+            <h3>If a join request fails</h3>
+            <p class="support-copy">The form validates obvious input issues first, then shows API errors inline.</p>
+            <ul class="support-list">
+              <li>Check that runtime is a positive number of hours.</li>
+              <li>Make sure at least one GPU is selected.</li>
+              <li>Retry after refresh if live scheduler data has not loaded yet.</li>
+            </ul>
+          </article>
+
+          <article class="support-card fade-up delay-3">
+            <h3>If a leave request fails</h3>
+            <p class="support-copy">A leave action only succeeds when the queued job is found by exact credentials.</p>
+            <ul class="support-list">
+              <li>Use the original job name exactly as submitted.</li>
+              <li>Use the same SSH password stored with that request.</li>
+              <li>If the job has already started running, it is no longer in the queue and cannot be removed here.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="table-card fade-up delay-2" aria-labelledby="queueHeading">
+        <div class="section-heading">
+          <div>
+            <h2 class="section-title" id="queueHeading">Queue detail</h2>
+            <p class="section-copy">Current jobs waiting in line, ordered by arrival. Runtime values are displayed in hours.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th scope="col">Position</th>
+                <th scope="col">Job</th>
+                <th scope="col">Requested runtime</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody"></tbody>
+          </table>
+          <div class="queue-empty" id="queueEmpty">Loading waitlist...</div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>Erbium waitlist operations dashboard</span>
+        <span>Join with name, password, GPUs, and runtime. Leave with the same name and password.</span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      devices: [],
+      queue: [],
+      waitTimeHours: null,
+      refreshTimer: null
+    };
+
+    const els = {
+      heroWaitTime: document.getElementById("heroWaitTime"),
+      heroQueueDepth: document.getElementById("heroQueueDepth"),
+      heroAvailableGpus: document.getElementById("heroAvailableGpus"),
+      metricWaitTime: document.getElementById("metricWaitTime"),
+      metricQueueDepth: document.getElementById("metricQueueDepth"),
+      metricReadyGpus: document.getElementById("metricReadyGpus"),
+      metricTotalGpus: document.getElementById("metricTotalGpus"),
+      lastUpdated: document.getElementById("lastUpdated"),
+      gpuList: document.getElementById("gpuList"),
+      queueBody: document.getElementById("queueBody"),
+      queueEmpty: document.getElementById("queueEmpty"),
+      joinForm: document.getElementById("joinForm"),
+      leaveForm: document.getElementById("leaveForm"),
+      joinButton: document.getElementById("joinButton"),
+      leaveButton: document.getElementById("leaveButton"),
+      joinFeedback: document.getElementById("joinFeedback"),
+      leaveFeedback: document.getElementById("leaveFeedback")
+    };
+
+    function formatHours(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) {
+        return "--";
+      }
+      const hours = Number(value);
+      if (hours < 1) {
+        return `${Math.round(hours * 60)} min`;
+      }
+      if (hours >= 24) {
+        return `${hours.toFixed(1)} h`;
+      }
+      return `${hours.toFixed(2)} h`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function setFeedback(target, type, message) {
+      target.className = `feedback ${type}`;
+      target.textContent = message;
+    }
+
+    function renderSummary() {
+      const availableCount = state.devices.filter((device) => device.available).length;
+      const totalCount = state.devices.length;
+      const queueDepth = state.queue.length;
+      const waitLabel = formatHours(state.waitTimeHours);
+
+      els.heroWaitTime.textContent = waitLabel;
+      els.metricWaitTime.textContent = waitLabel;
+      els.heroQueueDepth.textContent = String(queueDepth);
+      els.metricQueueDepth.textContent = String(queueDepth);
+      els.heroAvailableGpus.textContent = totalCount ? `${availableCount}/${totalCount}` : "--";
+      els.metricReadyGpus.textContent = String(availableCount);
+      els.metricTotalGpus.textContent = totalCount ? String(totalCount) : "--";
+      els.lastUpdated.textContent = `Last updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}`;
+    }
+
+    function renderGpuList() {
+      if (!state.devices.length) {
+        els.gpuList.innerHTML = '<div class="help-line">No GPU inventory is available yet.</div>';
+        return;
+      }
+
+      els.gpuList.innerHTML = state.devices.map((device) => {
+        const statusClass = device.available ? "available" : "busy";
+        const statusLabel = device.available ? "Available" : "Busy";
+        return `
+          <label class="gpu-chip">
+            <input type="checkbox" name="requested_gpus" value="${device.device_id}">
+            <div class="gpu-meta">
+              <strong>${escapeHtml(device.name)}</strong>
+              <span>ID ${device.device_id} . ${device.total_memory_gb.toFixed(0)} GB . ${device.utilization_percent.toFixed(0)}% compute . ${device.memory_utilization_percent.toFixed(0)}% memory</span>
+            </div>
+            <span class="gpu-status ${statusClass}">${statusLabel}</span>
+          </label>
+        `;
+      }).join("");
+    }
+
+    function renderQueue() {
+      if (!state.queue.length) {
+        els.queueBody.innerHTML = "";
+        els.queueEmpty.textContent = "No jobs are currently waiting in the queue.";
+        return;
+      }
+
+      els.queueEmpty.textContent = "";
+      els.queueBody.innerHTML = state.queue.map((job, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td class="queue-name">${escapeHtml(job[0])}</td>
+          <td>${formatHours(job[1])}</td>
+          <td><span class="badge busy">Queued</span></td>
+        </tr>
+      `).join("");
+    }
+
+    async function fetchJson(url, options) {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    async function refreshAvailability() {
+      const payload = await fetchJson("/availability");
+      state.devices = Object.values(payload || {}).sort((a, b) => a.device_id - b.device_id);
+      renderGpuList();
+    }
+
+    async function refreshWaitlist() {
+      const payload = await fetchJson("/waitlist");
+      state.queue = Array.isArray(payload.jobs) ? payload.jobs : [];
+      state.waitTimeHours = Number(payload.wait_time_hrs);
+      renderQueue();
+    }
+
+    async function refreshAll() {
+      try {
+        await Promise.all([refreshAvailability(), refreshWaitlist()]);
+        renderSummary();
+      } catch (error) {
+        els.lastUpdated.textContent = "Live data unavailable. Retry will happen automatically.";
+        if (!state.devices.length) {
+          els.gpuList.innerHTML = '<div class="help-line">Unable to load GPU inventory right now.</div>';
+        }
+        if (!state.queue.length) {
+          els.queueEmpty.textContent = "Unable to load waitlist right now.";
+        }
+      }
+    }
+
+    function selectedGpuIds() {
+      return Array.from(document.querySelectorAll('input[name="requested_gpus"]:checked'))
+        .map((input) => Number(input.value));
+    }
+
+    els.joinForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById("joinName").value.trim();
+      const sshPassword = document.getElementById("joinPassword").value;
+      const requestedRunTime = Number(document.getElementById("joinRuntime").value);
+      const requestedGpus = selectedGpuIds();
+
+      if (!name || !sshPassword) {
+        setFeedback(els.joinFeedback, "error", "Job name and SSH password are required.");
+        return;
+      }
+      if (!Number.isFinite(requestedRunTime) || requestedRunTime <= 0) {
+        setFeedback(els.joinFeedback, "error", "Requested runtime must be a positive number of hours.");
+        return;
+      }
+      if (!requestedGpus.length) {
+        setFeedback(els.joinFeedback, "error", "Select at least one GPU before joining the waitlist.");
+        return;
+      }
+
+      els.joinButton.disabled = true;
+      setFeedback(els.joinFeedback, "info", "Submitting reservation...");
+
+      try {
+        const payload = await fetchJson("/join_waitlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            ssh_password: sshPassword,
+            requested_gpus: requestedGpus,
+            requested_run_time_hrs: requestedRunTime
+          })
+        });
+        const queueLength = payload && payload.queue_length ? payload.queue_length : state.queue.length + 1;
+        setFeedback(els.joinFeedback, "success", `Queued successfully. Current queue depth: ${queueLength}.`);
+        els.joinForm.reset();
+        await refreshAll();
+      } catch (error) {
+        setFeedback(els.joinFeedback, "error", "Join request failed. Check the form values and try again.");
+      } finally {
+        els.joinButton.disabled = false;
+      }
+    });
+
+    els.leaveForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById("leaveName").value.trim();
+      const sshPassword = document.getElementById("leavePassword").value;
+
+      if (!name || !sshPassword) {
+        setFeedback(els.leaveFeedback, "error", "Job name and SSH password are required to remove a queued request.");
+        return;
+      }
+
+      els.leaveButton.disabled = true;
+      setFeedback(els.leaveFeedback, "info", "Checking the queue...");
+
+      try {
+        const payload = await fetchJson("/leave_waitlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            ssh_password: sshPassword
+          })
+        });
+
+        if (payload && payload.removed) {
+          setFeedback(els.leaveFeedback, "success", "Queued request removed.");
+          els.leaveForm.reset();
+          await refreshAll();
+        } else {
+          setFeedback(els.leaveFeedback, "error", "No queued request matched that job name and password.");
+        }
+      } catch (error) {
+        setFeedback(els.leaveFeedback, "error", "Leave request failed. Retry after the scheduler data refreshes.");
+      } finally {
+        els.leaveButton.disabled = false;
+      }
+    });
+
+    refreshAll();
+    state.refreshTimer = window.setInterval(refreshAll, 15000);
+  </script>
+</body>
+</html>

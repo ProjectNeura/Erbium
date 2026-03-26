@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from os.path import abspath
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
@@ -13,6 +13,7 @@ from erbium.api import Node, Job, get_all_gpu_info
 @dataclass
 class Runtime(object):
     homepage: str
+    dashboard: str
     node: Node | None = None
 
     def get_node(self) -> Node:
@@ -30,15 +31,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-runtime: Runtime = Runtime("")
+runtime: Runtime = Runtime("", "")
 
-with open(f"{abspath(__file__)[:-6]}assets/index.html") as f:
-    runtime.homepage = f.read()
+assets_dir = Path(__file__).with_name("assets")
+runtime.homepage = (assets_dir / "index.html").read_text()
+runtime.dashboard = (assets_dir / "dash.html").read_text()
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> str:
     return runtime.homepage
+
+
+@app.get("/dash", response_class=HTMLResponse)
+async def dash() -> str:
+    return runtime.dashboard
 
 
 @app.get("/waitlist")
@@ -61,8 +68,12 @@ class JobModel(BaseModel):
 
 
 @app.post("/join_waitlist")
-async def join_waitlist(job: JobModel) -> None:
+async def join_waitlist(job: JobModel) -> dict[str, Any]:
     runtime.get_node().join_waitlist(Job(job.name, job.ssh_password, job.requested_gpus, job.requested_run_time_hrs))
+    return {
+        "queued": True,
+        "queue_length": len(runtime.get_node().waitlist()),
+    }
 
 
 class JobQueryModel(BaseModel):
@@ -71,5 +82,5 @@ class JobQueryModel(BaseModel):
 
 
 @app.post("/leave_waitlist")
-async def leave_waitlist(job_query: JobQueryModel) -> None:
-    runtime.get_node().leave_waitlist(job_query.name, job_query.ssh_password)
+async def leave_waitlist(job_query: JobQueryModel) -> dict[str, bool]:
+    return {"removed": runtime.get_node().leave_waitlist(job_query.name, job_query.ssh_password)}

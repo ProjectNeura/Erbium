@@ -29,8 +29,6 @@ def __entry__() -> None:
     server_run = server_sub.add_parser("run")
     server_run.add_argument("-p", "--port", type=int, default=8000)
     server_run.add_argument("--host", default="0.0.0.0")
-    server_run.add_argument("root_dir")
-    server_run.add_argument("input_dir")
     server_run.add_argument("--max_gpu_utilization", type=float, default=.1)
     server_run.add_argument("--max_run_time_hrs", type=float, default=168)
     args = parser.parse_args()
@@ -53,7 +51,7 @@ def __entry__() -> None:
         case "server":
             match args.server_cmd:
                 case "run":
-                    run_server(args.port, args.root_dir, args.input_dir, host=args.host, scheduler_kwargs={
+                    run_server(args.port, host=args.host, node_kwargs={
                         "max_gpu_utilization": args.max_gpu_utilization,
                         "max_run_time_hrs": args.max_run_time_hrs
                     })

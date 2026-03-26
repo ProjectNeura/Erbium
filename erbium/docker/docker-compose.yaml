@@ -39,7 +39,9 @@ services:
               echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
               echo "AllowUsers access" >> /etc/ssh/sshd_config
               /usr/sbin/sshd
-              exec /workspace/venv/bin/jupyter lab --no-browser --port=8080 --allow-root --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True
+              /workspace/venv/bin/jupyter lab --no-browser --port=8080 --allow-root --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True
+              /workspace/venv/bin/pip git+https://github.com/ProjectNeura/Erbium
+              /workspace/venv/bin/python -m erbium server run -p 8000
             '
     restart: unless-stopped
 networks:
