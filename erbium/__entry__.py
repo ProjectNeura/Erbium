@@ -42,7 +42,8 @@ def __entry__() -> None:
                     with open(args.save_as, "w") as f:
                         f.write(create_docker_compose(
                             args.service_name, args.password, base_container=args.base_container,
-                            input_dir=args.input_dir, output_dir=args.output_dir
+                            hostname=args.service_name, container_name=args.service_name, input_dir=args.input_dir,
+                            output_dir=args.output_dir
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(
