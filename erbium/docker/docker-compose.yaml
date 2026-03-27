@@ -34,6 +34,7 @@ services:
               chown -R access:access /workspace/app
               chown -R access:access /workspace/output
               python3.12 -m venv /workspace/venv
+              chown -R access:access /workspace/venv
               /workspace/venv/bin/pip install torch torchvision jupyterlab
               echo "PermitRootLogin no" >> /etc/ssh/sshd_config
               echo "PubkeyAuthentication no" >> /etc/ssh/sshd_config
