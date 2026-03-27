@@ -28,10 +28,10 @@ services:
               set -e
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv tmux vim
-              mkdir -p /var/run/sshd /workspace/app
+              mkdir -p /var/run/sshd /workspace/app /workspace/venv
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
-              chown -R access:access /workspace/app /workspace/output
+              chown -R access:access /workspace/app /workspace/output /workspace/venv
               su - access -c "python3.12 -m venv /workspace/venv"
               su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
               echo "PermitRootLogin no" >> /etc/ssh/sshd_config
