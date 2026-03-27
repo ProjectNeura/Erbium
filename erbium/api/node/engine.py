@@ -1,15 +1,14 @@
-from time import time
+from time import time, sleep
 from dataclasses import dataclass
 from threading import Lock, Thread
 
-from erbium.api.os import get_all_gpu_info, GPUInfo, kill_all_sessions, run_command
+from erbium.api.os import GPUInfo, kill_all_sessions, run_command
 
 
 @dataclass
 class Job(object):
     name: str
     ssh_password: str
-    requested_gpus: set[int]
     requested_run_time_hrs: float
     start_time: float | None = None
 
@@ -36,13 +35,30 @@ class Node(object):
         job.start_time = time()
         self._running_job = job
 
+    def _kill_running_job(self) -> None:
+        kill_all_sessions("access", force=True)
+        self._running_job = None
+
     def _run(self) -> None:
         while True:
-            if self._running_job and self._running_job.start_time + 3600 * self._running_job.requested_run_time_hrs < time():
-                kill_all_sessions("access", force=True)
-                self._running_job = None
-            if not self._running_job:
-                self._start_job(self._scheduled_jobs.pop(0))
+            with self._lock:
+                if self._running_job and self._running_job.start_time + 3600 * self._running_job.requested_run_time_hrs < time():
+                    self._kill_running_job()
+                if not self._running_job and len(self._scheduled_jobs) > 0:
+                    self._start_job(self._scheduled_jobs.pop(0))
+                sleep(1)
+
+    def running_job(self) -> tuple[str, float, float] | None:
+        if not self._running_job:
+            return None
+        return self._running_job.name, self._running_job.requested_run_time_hrs, self._running_job.start_time
+
+    def stop_running_job(self, ssh_password: str) -> bool:
+        with self._lock:
+            if self._running_job and self._running_job.ssh_password == ssh_password:
+                self._kill_running_job()
+                return True
+        return False
 
     def join_waitlist(self, job: Job) -> None:
         with self._lock:

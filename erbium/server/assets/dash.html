@@ -341,7 +341,7 @@
     }
 
     .forms-grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: start;
     }
 
@@ -398,11 +398,6 @@
       transform: translateY(-1px);
     }
 
-    .gpu-picker {
-      display: grid;
-      gap: 10px;
-    }
-
     .gpu-list {
       display: grid;
       gap: 10px;
@@ -417,7 +412,6 @@
       border-radius: 18px;
       border: 1px solid rgba(15, 23, 42, 0.08);
       background: rgba(255, 255, 255, 0.86);
-      cursor: pointer;
       transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     }
 
@@ -426,10 +420,15 @@
       box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
     }
 
-    .gpu-chip input {
-      width: 18px;
-      height: 18px;
-      margin: 0;
+    .gpu-id {
+      min-width: 38px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(0, 113, 227, 0.1);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
     }
 
     .gpu-meta strong {
@@ -468,6 +467,38 @@
 
     .help-line {
       margin-top: -4px;
+    }
+
+    .running-summary {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .summary-row {
+      display: grid;
+      gap: 4px;
+    }
+
+    .summary-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #607083;
+    }
+
+    .summary-value {
+      font-size: 1rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .summary-empty {
+      font-size: 0.94rem;
+      color: var(--muted);
     }
 
     button {
@@ -698,32 +729,33 @@
         <nav class="nav" aria-label="Sections">
           <a href="#overview">Overview</a>
           <a href="#join">Join</a>
+          <a href="#activeJob">Active job</a>
           <a href="#leave">Leave</a>
-          <a href="#support">Support</a>
+          <a href="#inventory">Inventory</a>
         </nav>
       </header>
 
       <section class="hero" id="overview">
         <div class="hero-panel fade-up delay-1">
           <div class="eyebrow">Live scheduler visibility</div>
-          <h1>Join or leave the queue with full context before you commit.</h1>
+          <h1>Manage queued and running work from one operational view.</h1>
           <p class="hero-copy">
             This dashboard shows current GPU availability, total projected wait time, active queue depth,
-            and the exact details required to submit or remove a reservation. Join with a job name, SSH password,
-            GPU selection, and requested runtime. Leave with the same job name and password.
+            and the exact details required to submit, stop, or remove a reservation. Join with a job name,
+            SSH password, and requested runtime. Stop the active job or remove a queued entry with the same password.
           </p>
           <div class="hero-points">
             <div class="point">
               <strong>What you need</strong>
-              <span>Job name, SSH password, requested GPUs, and planned runtime in hours.</span>
+              <span>Job name, SSH password, and planned runtime in hours.</span>
             </div>
             <div class="point">
-              <strong>How removal works</strong>
-              <span>Only queued jobs can be removed, and credentials must match exactly.</span>
+              <strong>How controls differ</strong>
+              <span>Queued jobs can be removed by name and password. Running jobs can be stopped by password only.</span>
             </div>
             <div class="point">
               <strong>What updates live</strong>
-              <span>Queue length, total wait estimate, and per-GPU availability refresh automatically.</span>
+              <span>Queue length, active job state, total wait estimate, and per-GPU availability refresh automatically.</span>
             </div>
           </div>
         </div>
@@ -752,7 +784,7 @@
           <div>
             <h2 class="section-title">Operational snapshot</h2>
             <p class="section-copy">
-              Use these metrics to decide whether to join now, request fewer GPUs, or remove a queued request.
+              Use these metrics to decide whether to join now, stop the active session, or remove a queued request.
             </p>
           </div>
         </div>
@@ -801,25 +833,40 @@
               </label>
             </div>
 
-            <div class="field-grid">
-              <label>
-                Requested runtime (hours)
-                <input id="joinRuntime" name="requested_run_time_hrs" type="number" min="0.25" step="0.25" placeholder="4" required />
-              </label>
-              <div class="gpu-picker">
-                <span>GPU selection</span>
-                <div class="help-line">Choose one or more GPU devices. Available devices are marked live.</div>
-              </div>
-            </div>
-
-            <div class="gpu-list" id="gpuList" aria-live="polite"></div>
-            <div class="help-line">Support note: the same SSH password is required later if you need to remove this request from the queue.</div>
+            <label>
+              Requested runtime (hours)
+              <input id="joinRuntime" name="requested_run_time_hrs" type="number" min="0.25" step="0.25" placeholder="4" required />
+            </label>
+            <div class="help-line">Support note: the same SSH password is required later if you need to stop or remove this request.</div>
             <button id="joinButton" type="submit">Join waitlist</button>
             <div class="feedback info" id="joinFeedback">Waiting for live scheduler data...</div>
           </form>
         </article>
 
-        <article class="glass-card form-card fade-up delay-1" id="leave">
+        <article class="glass-card form-card fade-up delay-1" id="activeJob">
+          <div class="eyebrow">Running job control</div>
+          <h3>Stop the active session</h3>
+          <p class="form-copy">
+            The scheduler exposes the currently running job separately from the queue. Stop requests only require the
+            running job SSH password.
+          </p>
+
+          <div class="running-summary" id="runningJobSummary" aria-live="polite">
+            <div class="summary-empty">Loading active job status...</div>
+          </div>
+
+          <form id="stopForm">
+            <label>
+              SSH password
+              <input id="stopPassword" name="ssh_password" type="password" autocomplete="current-password" placeholder="Must match the active job" required />
+            </label>
+            <div class="help-line">Support note: stop requests only succeed for the current running job.</div>
+            <button id="stopButton" class="secondary-button" type="submit" disabled>Stop running job</button>
+            <div class="feedback info" id="stopFeedback">Active job state refreshes automatically.</div>
+          </form>
+        </article>
+
+        <article class="glass-card form-card fade-up delay-2" id="leave">
           <div class="eyebrow">Leave the waitlist</div>
           <h3>Remove a queued reservation</h3>
           <p class="form-copy">
@@ -848,7 +895,7 @@
           <div>
             <h2 class="section-title">Support guidance</h2>
             <p class="section-copy">
-              These notes cover the most common join and leave issues without requiring a separate runbook.
+              These notes cover the most common join, stop, and leave issues without requiring a separate runbook.
             </p>
           </div>
         </div>
@@ -856,34 +903,44 @@
         <div class="support-grid">
           <article class="support-card fade-up delay-1">
             <h3>Before you join</h3>
-            <p class="support-copy">Confirm you only request the GPUs you need and set a realistic runtime window.</p>
+            <p class="support-copy">Set a realistic runtime window and keep the submitted credentials accessible.</p>
             <ul class="support-list">
               <li>Shorter runtime requests reduce total wait time for the rest of the queue.</li>
-              <li>Available GPU badges are informational; your job is still placed into the scheduler queue.</li>
+              <li>Available GPU badges are informational; new jobs are still placed into the scheduler queue.</li>
               <li>Use a memorable job name so you can identify and remove the request later if plans change.</li>
             </ul>
           </article>
 
           <article class="support-card fade-up delay-2">
-            <h3>If a join request fails</h3>
-            <p class="support-copy">The form validates obvious input issues first, then shows API errors inline.</p>
+            <h3>If a stop request fails</h3>
+            <p class="support-copy">A stop action only succeeds when the password matches the current running job.</p>
             <ul class="support-list">
-              <li>Check that runtime is a positive number of hours.</li>
-              <li>Make sure at least one GPU is selected.</li>
-              <li>Retry after refresh if live scheduler data has not loaded yet.</li>
+              <li>Confirm a job is actively running before submitting the password.</li>
+              <li>Use the password associated with the currently active session.</li>
+              <li>Retry after refresh if the running-job panel has not loaded yet.</li>
             </ul>
           </article>
 
           <article class="support-card fade-up delay-3">
-            <h3>If a leave request fails</h3>
-            <p class="support-copy">A leave action only succeeds when the queued job is found by exact credentials.</p>
+            <h3>If a join or leave request fails</h3>
+            <p class="support-copy">Join validates required fields first. Leave only succeeds for queued jobs with exact credentials.</p>
             <ul class="support-list">
-              <li>Use the original job name exactly as submitted.</li>
-              <li>Use the same SSH password stored with that request.</li>
+              <li>Check that runtime is a positive number of hours before joining.</li>
+              <li>Use the original job name exactly as submitted when leaving.</li>
               <li>If the job has already started running, it is no longer in the queue and cannot be removed here.</li>
             </ul>
           </article>
         </div>
+      </section>
+
+      <section class="table-card fade-up delay-2" id="inventory" aria-labelledby="inventoryHeading">
+        <div class="section-heading">
+          <div>
+            <h2 class="section-title" id="inventoryHeading">GPU inventory</h2>
+            <p class="section-copy">Current device telemetry and availability badges. Inventory is informational and refreshes live.</p>
+          </div>
+        </div>
+        <div class="gpu-list" id="gpuList" aria-live="polite"></div>
       </section>
 
       <section class="table-card fade-up delay-2" aria-labelledby="queueHeading">
@@ -911,7 +968,7 @@
 
       <footer class="footer">
         <span>Erbium waitlist operations dashboard</span>
-        <span>Join with name, password, GPUs, and runtime. Leave with the same name and password.</span>
+        <span>Join with name, password, and runtime. Stop running jobs by password. Leave queued jobs by name and password.</span>
       </footer>
     </div>
   </div>
@@ -920,6 +977,7 @@
     const state = {
       devices: [],
       queue: [],
+      runningJob: null,
       waitTimeHours: null,
       refreshTimer: null
     };
@@ -934,13 +992,17 @@
       metricTotalGpus: document.getElementById("metricTotalGpus"),
       lastUpdated: document.getElementById("lastUpdated"),
       gpuList: document.getElementById("gpuList"),
+      runningJobSummary: document.getElementById("runningJobSummary"),
       queueBody: document.getElementById("queueBody"),
       queueEmpty: document.getElementById("queueEmpty"),
       joinForm: document.getElementById("joinForm"),
+      stopForm: document.getElementById("stopForm"),
       leaveForm: document.getElementById("leaveForm"),
       joinButton: document.getElementById("joinButton"),
+      stopButton: document.getElementById("stopButton"),
       leaveButton: document.getElementById("leaveButton"),
       joinFeedback: document.getElementById("joinFeedback"),
+      stopFeedback: document.getElementById("stopFeedback"),
       leaveFeedback: document.getElementById("leaveFeedback")
     };
 
@@ -972,6 +1034,18 @@
       target.textContent = message;
     }
 
+    function formatStartedAt(unixSeconds) {
+      if (!Number.isFinite(Number(unixSeconds))) {
+        return "--";
+      }
+      return new Date(Number(unixSeconds) * 1000).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
     function renderSummary() {
       const availableCount = state.devices.filter((device) => device.available).length;
       const totalCount = state.devices.length;
@@ -998,16 +1072,41 @@
         const statusClass = device.available ? "available" : "busy";
         const statusLabel = device.available ? "Available" : "Busy";
         return `
-          <label class="gpu-chip">
-            <input type="checkbox" name="requested_gpus" value="${device.device_id}">
+          <article class="gpu-chip">
+            <span class="gpu-id">GPU ${device.device_id}</span>
             <div class="gpu-meta">
               <strong>${escapeHtml(device.name)}</strong>
-              <span>ID ${device.device_id} . ${device.total_memory_gb.toFixed(0)} GB . ${device.utilization_percent.toFixed(0)}% compute . ${device.memory_utilization_percent.toFixed(0)}% memory</span>
+              <span>${device.total_memory_gb.toFixed(0)} GB . ${device.utilization_percent.toFixed(0)}% compute . ${device.memory_utilization_percent.toFixed(0)}% memory . ${device.power_draw_w.toFixed(0)} W</span>
             </div>
             <span class="gpu-status ${statusClass}">${statusLabel}</span>
-          </label>
+          </article>
         `;
       }).join("");
+    }
+
+    function renderRunningJob() {
+      if (!Array.isArray(state.runningJob) || state.runningJob.length < 3) {
+        els.stopButton.disabled = true;
+        els.runningJobSummary.innerHTML = '<div class="summary-empty">No job is currently running.</div>';
+        return;
+      }
+
+      const [name, requestedRunTime, startedAt] = state.runningJob;
+      els.stopButton.disabled = false;
+      els.runningJobSummary.innerHTML = `
+        <div class="summary-row">
+          <div class="summary-label">Job</div>
+          <div class="summary-value">${escapeHtml(name)}</div>
+        </div>
+        <div class="summary-row">
+          <div class="summary-label">Requested runtime</div>
+          <div class="summary-value">${formatHours(requestedRunTime)}</div>
+        </div>
+        <div class="summary-row">
+          <div class="summary-label">Started</div>
+          <div class="summary-value">${formatStartedAt(startedAt)}</div>
+        </div>
+      `;
     }
 
     function renderQueue() {
@@ -1046,7 +1145,9 @@
     async function refreshWaitlist() {
       const payload = await fetchJson("/waitlist");
       state.queue = Array.isArray(payload.jobs) ? payload.jobs : [];
+      state.runningJob = Array.isArray(payload.running_job) ? payload.running_job : null;
       state.waitTimeHours = Number(payload.wait_time_hrs);
+      renderRunningJob();
       renderQueue();
     }
 
@@ -1059,15 +1160,14 @@
         if (!state.devices.length) {
           els.gpuList.innerHTML = '<div class="help-line">Unable to load GPU inventory right now.</div>';
         }
+        if (!state.runningJob) {
+          els.stopButton.disabled = true;
+          els.runningJobSummary.innerHTML = '<div class="summary-empty">Unable to load active job status right now.</div>';
+        }
         if (!state.queue.length) {
           els.queueEmpty.textContent = "Unable to load waitlist right now.";
         }
       }
-    }
-
-    function selectedGpuIds() {
-      return Array.from(document.querySelectorAll('input[name="requested_gpus"]:checked'))
-        .map((input) => Number(input.value));
     }
 
     els.joinForm.addEventListener("submit", async (event) => {
@@ -1076,7 +1176,6 @@
       const name = document.getElementById("joinName").value.trim();
       const sshPassword = document.getElementById("joinPassword").value;
       const requestedRunTime = Number(document.getElementById("joinRuntime").value);
-      const requestedGpus = selectedGpuIds();
 
       if (!name || !sshPassword) {
         setFeedback(els.joinFeedback, "error", "Job name and SSH password are required.");
@@ -1084,10 +1183,6 @@
       }
       if (!Number.isFinite(requestedRunTime) || requestedRunTime <= 0) {
         setFeedback(els.joinFeedback, "error", "Requested runtime must be a positive number of hours.");
-        return;
-      }
-      if (!requestedGpus.length) {
-        setFeedback(els.joinFeedback, "error", "Select at least one GPU before joining the waitlist.");
         return;
       }
 
@@ -1101,7 +1196,6 @@
           body: JSON.stringify({
             name,
             ssh_password: sshPassword,
-            requested_gpus: requestedGpus,
             requested_run_time_hrs: requestedRunTime
           })
         });
@@ -1113,6 +1207,42 @@
         setFeedback(els.joinFeedback, "error", "Join request failed. Check the form values and try again.");
       } finally {
         els.joinButton.disabled = false;
+      }
+    });
+
+    els.stopForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const sshPassword = document.getElementById("stopPassword").value;
+
+      if (!sshPassword) {
+        setFeedback(els.stopFeedback, "error", "SSH password is required to stop the active job.");
+        return;
+      }
+
+      els.stopButton.disabled = true;
+      setFeedback(els.stopFeedback, "info", "Submitting stop request...");
+
+      try {
+        const payload = await fetchJson("/stop_running_job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ssh_password: sshPassword
+          })
+        });
+
+        if (payload && payload.stopped) {
+          setFeedback(els.stopFeedback, "success", "Running job stopped.");
+          els.stopForm.reset();
+          await refreshAll();
+        } else {
+          setFeedback(els.stopFeedback, "error", "No running job matched that SSH password.");
+        }
+      } catch (error) {
+        setFeedback(els.stopFeedback, "error", "Stop request failed. Retry after the dashboard refreshes.");
+      } finally {
+        els.stopButton.disabled = !Array.isArray(state.runningJob) || state.runningJob.length < 3;
       }
     });
 

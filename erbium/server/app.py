@@ -50,7 +50,10 @@ async def dash() -> str:
 
 @app.get("/waitlist")
 async def waitlist() -> dict[str, Any]:
-    return {"wait_time_hrs": runtime.get_node().wait_time_hrs(), "jobs": runtime.get_node().waitlist()}
+    return {
+        "wait_time_hrs": runtime.get_node().wait_time_hrs(), "running_job": runtime.get_node().running_job(),
+        "jobs": runtime.get_node().waitlist()
+    }
 
 
 @app.get("/availability")
@@ -63,22 +66,29 @@ async def availability() -> dict[str, Any]:
 class JobModel(BaseModel):
     name: str
     ssh_password: str
-    requested_gpus: set[int]
     requested_run_time_hrs: float
 
 
 @app.post("/join_waitlist")
 async def join_waitlist(job: JobModel) -> dict[str, Any]:
-    runtime.get_node().join_waitlist(Job(job.name, job.ssh_password, job.requested_gpus, job.requested_run_time_hrs))
+    runtime.get_node().join_waitlist(Job(job.name, job.ssh_password, job.requested_run_time_hrs))
     return {
         "queued": True,
         "queue_length": len(runtime.get_node().waitlist()),
     }
 
 
-class JobQueryModel(BaseModel):
-    name: str
+class RunningJobModel(BaseModel):
     ssh_password: str
+
+
+@app.post("/stop_running_job")
+async def stop_running_job(job: RunningJobModel) -> dict[str, bool]:
+    return {"stopped": runtime.get_node().stop_running_job(job.ssh_password)}
+
+
+class JobQueryModel(RunningJobModel):
+    name: str
 
 
 @app.post("/leave_waitlist")
