@@ -31,18 +31,15 @@ services:
               mkdir -p /var/run/sshd /workspace/app
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
-              chown -R access:access /workspace/app
-              chown -R access:access /workspace/output
-              python3.12 -m venv /workspace/venv
-              chown -R access:access /workspace/venv
-              /workspace/venv/bin/pip install torch torchvision jupyterlab
+              chown -R access:access /workspace/app /workspace/output
+              su - access -c "python3.12 -m venv /workspace/venv"
+              su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
               echo "PermitRootLogin no" >> /etc/ssh/sshd_config
               echo "PubkeyAuthentication no" >> /etc/ssh/sshd_config
               echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
               echo "AllowUsers access" >> /etc/ssh/sshd_config
               /usr/sbin/sshd
               su - access -c "/workspace/venv/bin/jupyter lab --no-browser --port=8080 --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True" &
-              /workspace/venv/bin/pip install git+https://github.com/ProjectNeura/Erbium
               /workspace/venv/bin/python -m erbium server run -p 8000
             '
     restart: unless-stopped
