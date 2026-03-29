@@ -14,7 +14,7 @@ class Job(object):
 
 
 class Node(object):
-    def __init__(self, *, max_gpu_utilization: float = .1, max_gpu_memory_utilization: float = .1,
+    def __init__(self, *, max_gpu_utilization: float = 10, max_gpu_memory_utilization: float = 10,
                  max_run_time_hrs: float = 168) -> None:
         """
         :param max_gpu_utilization: the maximum GPU utilization allowed to be considered available
