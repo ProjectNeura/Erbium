@@ -2,7 +2,8 @@ from time import time, sleep
 from dataclasses import dataclass
 from threading import Lock, Thread
 
-from erbium.api.os import GPUInfo, run_command
+from erbium.api import run_command_async
+from erbium.api.os import GPUInfo, kill_all_sessions, run_command
 
 
 @dataclass
@@ -36,7 +37,8 @@ class Node(object):
         self._running_job = job
 
     def _kill_running_job(self) -> None:
-        # kill_all_sessions("access", force=True)
+        kill_all_sessions("access", force=True)
+        run_command_async("/workspace/venv/bin/jupyter lab --no-browser --port=8080 --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True")
         self._running_job = None
 
     def _run(self) -> None:
