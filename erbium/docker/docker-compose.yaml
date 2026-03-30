@@ -23,6 +23,9 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
     command: >
       bash -lc '
               set -e
@@ -31,6 +34,9 @@ services:
               mkdir -p /var/run/sshd /workspace/app /workspace/venv
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
+              groupadd -f video
+              groupadd -f render
+              usermod -aG video,render access || true
               chown -R access:access /workspace/app /workspace/output /workspace/venv
               su - access -c "python3.12 -m venv /workspace/venv"
               su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
