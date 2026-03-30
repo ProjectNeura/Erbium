@@ -50,7 +50,7 @@ class Node(object):
                     self._start_job(self._scheduled_jobs.pop(0))
                 sleep(1)
 
-    def running_job(self) -> tuple[str, float, float] | None:
+    def running_job(self) -> tuple[str, float, float | None] | None:
         if not self._running_job:
             return None
         return self._running_job.name, self._running_job.requested_run_time_hrs, self._running_job.start_time
