@@ -38,7 +38,6 @@ class Node(object):
 
     def _kill_running_job(self) -> None:
         kill_all_sessions("access", force=True)
-        run_command_async("/workspace/venv/bin/jupyter lab --no-browser --port=8080 --ip=0.0.0.0 --ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True")
         self._running_job = None
 
     def _run(self) -> None:
