@@ -2,7 +2,7 @@ from time import time, sleep
 from dataclasses import dataclass
 from threading import Lock, Thread
 
-from erbium.api.os import GPUInfo, kill_all_sessions, run_command
+from erbium.api.os import GPUInfo, run_command
 
 
 @dataclass
@@ -36,7 +36,7 @@ class Node(object):
         self._running_job = job
 
     def _kill_running_job(self) -> None:
-        kill_all_sessions("access", force=True)
+        # kill_all_sessions("access", force=True)
         self._running_job = None
 
     def _run(self) -> None:
