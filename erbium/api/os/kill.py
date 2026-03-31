@@ -1,7 +1,7 @@
 from subprocess import run
 
 
-def kill_all_sessions(username: str, *, force: bool = False, use_loginctl: bool = True) -> None:
+def kill_all_sessions(username: str, *, force: bool = False, use_loginctl: bool = False) -> None:
     if use_loginctl:
         result = run(["loginctl", "terminate-user", username], capture_output=True, text=True)
         if result.returncode == 0:
