@@ -1202,7 +1202,8 @@
         const queueLength = payload && payload.queue_length ? payload.queue_length : state.queue.length + 1;
         setFeedback(els.joinFeedback, "success", `Queued successfully. Current queue depth: ${queueLength}.`);
         els.joinForm.reset();
-        await refreshAll();
+        await refreshWaitlist();
+        renderSummary();
       } catch (error) {
         setFeedback(els.joinFeedback, "error", "Join request failed. Check the form values and try again.");
       } finally {
@@ -1235,7 +1236,8 @@
         if (payload && payload.stopped) {
           setFeedback(els.stopFeedback, "success", "Running job stopped.");
           els.stopForm.reset();
-          await refreshAll();
+          await refreshWaitlist();
+          renderSummary();
         } else {
           setFeedback(els.stopFeedback, "error", "No running job matched that SSH password.");
         }
@@ -1273,7 +1275,8 @@
         if (payload && payload.removed) {
           setFeedback(els.leaveFeedback, "success", "Queued request removed.");
           els.leaveForm.reset();
-          await refreshAll();
+          await refreshWaitlist();
+          renderSummary();
         } else {
           setFeedback(els.leaveFeedback, "error", "No queued request matched that job name and password.");
         }
