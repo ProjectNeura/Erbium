@@ -47,7 +47,7 @@ class Node(object):
                     self._kill_running_job()
                 if not self._running_job and len(self._scheduled_jobs) > 0:
                     self._start_job(self._scheduled_jobs.pop(0))
-                sleep(1)
+            sleep(1)
 
     def running_job(self) -> tuple[str, float, float | None] | None:
         if not self._running_job:
