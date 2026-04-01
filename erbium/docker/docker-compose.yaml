@@ -30,7 +30,7 @@ services:
       bash -lc '
               set -e
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl git gnupg openssh-server python3.12 python3.12-venv tmux vim
+              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim
               mkdir -p /var/run/sshd /workspace/app /workspace/venv
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
