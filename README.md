@@ -11,42 +11,33 @@ exposed via APIs.
 Currently, we only considered hosts with Nvidia GPUs, as they are the most developer-friendly and widely used. You can
 simply fork this repository and replace the driver-related code with your own.
 
-## Install API
+## Setting Up Your Workstation as a Host
+
+### Clone the Repository
 
 ```shell
-pip install git+https://github.com/ProjectNeura/Erbium
+git clone https://github.com/ProjectNeura/Erbium
 ```
 
-## Create a Docker Compose File
+### Set Up Cloudflare Tunnel
+
+You need to save the Cloudflare Tunnel token locally as "cloudflared_tunnel_token.txt" in the root directory of the
+project.
+
+Then, run the following command to start the tunnel:
 
 ```shell
-python -m docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR SAVE_AS
+python -m erbium docker init
 ```
 
-## Initialize the Control Server
-
-### Install `cloudflared`
-
-#### Windows
+### Build a Docker Image
 
 ```shell
-winget install --id Cloudflare.cloudflared
+python -m erbium docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR ./docker-compose.yaml
 ```
 
-#### Linux
+### Start the Docker Container
 
 ```shell
-sudo mkdir -p --mode=0755 /usr/share/keyrings
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
-echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared noble main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
-sudo apt-get update
-sudo apt-get install cloudflared
-```
-
-### Start Reverse Proxy
-
-```shell
-cloudflared tunnel login
-cloudflared tunnel create ErbiumControl
-cloudflared tunnel run ErbiumControl
+python -m erbium docker run ./docker-compose.yaml SERVICE_NAME
 ```
