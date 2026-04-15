@@ -11,6 +11,7 @@ __DEFAULT_SHARED_NETWORK__: str = "labnet"
 __DEFAULT_SSH_PASSWORD__: str = "sshpassword"
 __DEFAULT_INPUT_DIR__: str = "S:/erbium_input"
 __DEFAULT_OUTPUT_DIR__: str = "S:/erbium_output"
+__DEFAULT_BACKUP_DIR__: str = "S:/erbium_backup"
 __DEFAULT_GPU_DRIVER__: str = "nvidia"
 __DEFAULT_GPUS__: str = "all"
 
@@ -40,6 +41,7 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_containe
                           shared_network: str = __DEFAULT_SHARED_NETWORK__,
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
                           output_dir: str | PathLike[str] = __DEFAULT_OUTPUT_DIR__,
+                          backup_dir: str | PathLike[str] = __DEFAULT_BACKUP_DIR__,
                           gpu_driver: str = __DEFAULT_GPU_DRIVER__,
                           gpus: int | str | Sequence[int] = __DEFAULT_GPUS__) -> str:
     """

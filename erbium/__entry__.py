@@ -19,6 +19,7 @@ def __entry__() -> None:
     docker_create.add_argument("-b", "--base_container", default=__DEFAULT_BASE_CONTAINER__)
     docker_create.add_argument("input_dir")
     docker_create.add_argument("output_dir")
+    docker_create.add_argument("backup_dir")
     docker_create.add_argument("save_as")
     docker_run = docker_sub.add_parser("run")
     docker_run.add_argument("profile_path")
@@ -43,7 +44,7 @@ def __entry__() -> None:
                         f.write(create_docker_compose(
                             args.service_name, args.password, base_container=args.base_container,
                             hostname=args.service_name, container_name=args.service_name, input_dir=args.input_dir,
-                            output_dir=args.output_dir
+                            output_dir=args.output_dir, backup_dir=args.backup_dir
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(
