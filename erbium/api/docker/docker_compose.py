@@ -31,6 +31,7 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
     "ssh_password": (f"access:{__DEFAULT_SSH_PASSWORD__}", lambda x: f"access:{x}"),
     "input_dir": (f"- {__DEFAULT_INPUT_DIR__}:", lambda x: f"- {x}:"),
     "output_dir": (f"- {__DEFAULT_OUTPUT_DIR__}:", lambda x: f"- {x}:"),
+    "backup_dir": (f"- {__DEFAULT_BACKUP_DIR__}:", lambda x: f"- {x}:"),
     "gpu_driver": (f"- driver: {__DEFAULT_GPU_DRIVER__}", lambda x: f"- driver: {x}"),
     "gpus": (f"count: {__DEFAULT_GPUS__}", _set_gpus)
 }
