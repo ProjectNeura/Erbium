@@ -47,8 +47,6 @@ services:
               if [ ! -f /workspace/output/backup/config ]; then
                 borg init --encryption=none /workspace/output/backup
               fi
-              chmod 700 /usr/local/bin/backup-output.sh
-              chown root:root /usr/local/bin/backup-output.sh
               (
                 while true; do
                 /usr/local/bin/backup-output.sh || true
