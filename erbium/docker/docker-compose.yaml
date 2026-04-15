@@ -7,6 +7,7 @@ services:
     volumes:
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
+      - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
       - S:/erbium_input:/workspace/input:ro
       - S:/erbium_output:/workspace/output
     cap_add:
@@ -46,13 +47,6 @@ services:
               if [ ! -f /workspace/output/backup/config ]; then
                 borg init --encryption=none /workspace/output/backup
               fi
-              cat >/usr/local/bin/backup-output.sh <<'"'"'EOF'"'"'
-              #!/usr/bin/env bash
-              set -euo pipefail
-              export BORG_REPO=/workspace/output/backup
-              borg create --stats --exclude /workspace/output/backup ::'{hostname}-{now:%Y-%m-%d_%H-%M-%S}' /workspace/output
-              borg prune --list --keep-daily=7 --keep-weekly=4 --keep-monthly=6
-              EOF
               chmod 700 /usr/local/bin/backup-output.sh
               chown root:root /usr/local/bin/backup-output.sh
               (
