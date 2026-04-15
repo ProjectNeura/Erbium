@@ -26,12 +26,13 @@ services:
     environment:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      BORG_REPO: /workspace/output/backup
     command: >
       bash -lc '
               set -e
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim
-              mkdir -p /var/run/sshd /workspace/app /workspace/venv
+              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup
+              mkdir -p /var/run/sshd /workspace/app /workspace/venv /workspace/output/backup
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
               groupadd -f video
@@ -40,6 +41,26 @@ services:
               chown -R access:access /workspace/app /workspace/output /workspace/venv
               su - access -c "python3.12 -m venv /workspace/venv"
               su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
+              chown root:root /workspace/output/backup
+              chmod 700 /workspace/output/backup
+              if [ ! -f /workspace/output/backup/config ]; then
+                borg init --encryption=none /workspace/output/backup
+              fi
+              cat >/usr/local/bin/backup-output.sh <<'"'"'EOF'"'"'
+              #!/usr/bin/env bash
+              set -euo pipefail
+              export BORG_REPO=/workspace/output/backup
+              borg create --stats --exclude /workspace/output/backup ::'{hostname}-{now:%Y-%m-%d_%H-%M-%S}' /workspace/output
+              borg prune --list --keep-daily=7 --keep-weekly=4 --keep-monthly=6
+              EOF
+              chmod 700 /usr/local/bin/backup-output.sh
+              chown root:root /usr/local/bin/backup-output.sh
+              (
+                while true; do
+                /usr/local/bin/backup-output.sh || true
+                sleep 43200
+                done
+              ) &
               echo "PermitRootLogin no" >> /etc/ssh/sshd_config
               echo "PubkeyAuthentication no" >> /etc/ssh/sshd_config
               echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config

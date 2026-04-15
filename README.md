@@ -11,6 +11,13 @@ exposed via APIs.
 Currently, we only considered hosts with Nvidia GPUs, as they are the most developer-friendly and widely used. You can
 simply fork this repository and replace the driver-related code with your own.
 
+## Key Features
+
+- SSH Tunneling
+- JupyterLab
+- Job Scheduling
+- File History Backup
+
 ## Setting Up Your Workstation as a Host
 
 ### Clone the Repository
