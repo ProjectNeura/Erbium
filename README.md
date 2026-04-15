@@ -18,6 +18,26 @@ simply fork this repository and replace the driver-related code with your own.
 - Job Scheduling
 - File History Backup
 
+Some facts:
+
+- SSH tunnel defaults to ~, not "/workspace"
+- JupyterLab can only explore files in "/workspace", but its terminal can access anything
+- Only the output folder "/workspace/output" is backed up every 12 hours
+- Jobs that reach their requested duration will be killed
+
+## Accessing an Erbium Node
+
+The username is always "access". You need to schedule a job to set the SSH password.
+
+For example, to access the main node, visit https://main-erbium.projectneura.org and you will see the web SSH interface.
+
+Adding "node-" such that https://node-main-erbium.projectneura.org directs you to the job scheduling page.
+
+Adding "jupyter-" such that https://node-main-erbium.projectneura.org directs you to the JupyterLab. Note that whenever
+a new job initializes, you will need to log into the web SSH interface and use `jupyter server list` to get the token.
+
+To use other nodes, simply replace "main" with the name of the node.
+
 ## Setting Up Your Workstation as a Host
 
 ### Clone the Repository
