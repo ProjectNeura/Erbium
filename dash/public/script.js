@@ -46,6 +46,48 @@ function getFilteredNodes() {
   });
 }
 
+function buildNodeLinks(nodeName) {
+  const match = nodeName.match(/^\s*([A-Za-z0-9]+).*?-\s*([A-Za-z0-9]+)\s*$/);
+  if (!match) return [];
+
+  const cluster = match[1].toLowerCase();
+  const nodeCode = match[2].toLowerCase();
+  const slug = `${nodeCode}-${cluster}`;
+
+  return [
+    { label: 'SSH Tunnel', href: `https://${slug}.projectneura.org` },
+    { label: 'JupyterLab', href: `https://jupyter-${slug}.projectneura.org` },
+    { label: 'Node Dashboard', href: `https://node-${slug}.projectneura.org/dash` },
+  ];
+}
+
+function renderNodeLinks(container, node) {
+  container.replaceChildren();
+
+  if (!node.online) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  const links = buildNodeLinks(node.name);
+  if (!links.length) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+
+  for (const link of links) {
+    const anchor = document.createElement('a');
+    anchor.className = 'link-button';
+    anchor.href = link.href;
+    anchor.target = '_blank';
+    anchor.rel = 'noreferrer noopener';
+    anchor.textContent = link.label;
+    container.appendChild(anchor);
+  }
+}
+
 function renderNodes() {
   const filteredNodes = getFilteredNodes();
   elements.nodesGrid.replaceChildren();
@@ -70,6 +112,9 @@ function renderNodes() {
     fragment.querySelector('.active-at').textContent = formatDate(node.activeAt);
     fragment.querySelector('.inactive-at').textContent = formatDate(node.inactiveAt);
     fragment.querySelector('.node-id').textContent = node.id || '—';
+
+    const linksContainer = fragment.querySelector('.node-links');
+    renderNodeLinks(linksContainer, node);
 
     elements.nodesGrid.appendChild(fragment);
   }

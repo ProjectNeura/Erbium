@@ -62,7 +62,7 @@ h1 {
   max-width: 60ch;
 }
 
-.button, input, select {
+.button, input, select, .link-button {
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
@@ -173,6 +173,27 @@ h1 {
 .node-details dd {
   margin: 6px 0 0;
   word-break: break-word;
+}
+
+.node-links {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.link-button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.link-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(122, 162, 255, 0.45);
+  background: rgba(122, 162, 255, 0.12);
 }
 
 .message {
