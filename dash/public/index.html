@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare Nodes Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Cloudflare Pages + Functions</p>
+          <h1>Cloudflare Nodes Dashboard</h1>
+          <p class="subtitle">
+            Pulls tunnel data from the Cloudflare API and shows which nodes are online.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button id="refreshButton" class="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="stats" id="stats">
+        <article class="stat-card">
+          <span class="stat-label">Total nodes</span>
+          <strong id="totalCount">—</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Online</span>
+          <strong id="onlineCount">—</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Offline</span>
+          <strong id="offlineCount">—</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Last updated</span>
+          <strong id="generatedAt">—</strong>
+        </article>
+      </section>
+
+      <section class="toolbar">
+        <input id="searchInput" type="search" placeholder="Search nodes by name" />
+        <select id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="online">Online only</option>
+          <option value="offline">Offline only</option>
+        </select>
+      </section>
+
+      <main>
+        <div id="message" class="message hidden"></div>
+        <div id="nodesGrid" class="nodes-grid"></div>
+      </main>
+    </div>
+
+    <template id="nodeCardTemplate">
+      <article class="node-card">
+        <div class="node-header">
+          <div>
+            <h2 class="node-name"></h2>
+            <p class="node-type"></p>
+          </div>
+          <span class="status-pill"></span>
+        </div>
+        <dl class="node-details">
+          <div>
+            <dt>Connections</dt>
+            <dd class="connection-count"></dd>
+          </div>
+          <div>
+            <dt>Active at</dt>
+            <dd class="active-at"></dd>
+          </div>
+          <div>
+            <dt>Inactive at</dt>
+            <dd class="inactive-at"></dd>
+          </div>
+          <div>
+            <dt>ID</dt>
+            <dd class="node-id"></dd>
+          </div>
+        </dl>
+      </article>
+    </template>
+
+    <script src="/script.js" type="module"></script>
+  </body>
+</html>
