@@ -2,18 +2,35 @@ const state = {
   nodes: [],
 };
 
+function byId(id) {
+  return document.getElementById(id);
+}
+
 const elements = {
-  totalCount: document.getElementById('totalCount'),
-  onlineCount: document.getElementById('onlineCount'),
-  offlineCount: document.getElementById('offlineCount'),
-  generatedAt: document.getElementById('generatedAt'),
-  nodesGrid: document.getElementById('nodesGrid'),
-  message: document.getElementById('message'),
-  searchInput: document.getElementById('searchInput'),
-  statusFilter: document.getElementById('statusFilter'),
-  refreshButton: document.getElementById('refreshButton'),
-  nodeCardTemplate: document.getElementById('nodeCardTemplate'),
+  totalCount: null,
+  onlineCount: null,
+  offlineCount: null,
+  generatedAt: null,
+  nodesGrid: null,
+  message: null,
+  searchInput: null,
+  statusFilter: null,
+  refreshButton: null,
+  nodeCardTemplate: null,
 };
+
+function initElements() {
+  elements.totalCount = byId('totalCount');
+  elements.onlineCount = byId('onlineCount');
+  elements.offlineCount = byId('offlineCount');
+  elements.generatedAt = byId('generatedAt');
+  elements.nodesGrid = byId('nodesGrid');
+  elements.message = byId('message');
+  elements.searchInput = byId('searchInput');
+  elements.statusFilter = byId('statusFilter');
+  elements.refreshButton = byId('refreshButton');
+  elements.nodeCardTemplate = byId('nodeCardTemplate');
+}
 
 function formatDate(value) {
   if (!value) return '—';
@@ -26,17 +43,19 @@ function formatDate(value) {
 }
 
 function setMessage(text, isError = false) {
+  if (!elements.message) return;
   elements.message.textContent = text;
   elements.message.classList.toggle('hidden', !text);
   elements.message.style.borderColor = isError ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 255, 255, 0.08)';
 }
 
 function getFilteredNodes() {
-  const query = elements.searchInput.value.trim().toLowerCase();
-  const statusFilter = elements.statusFilter.value;
+  const query = elements.searchInput?.value?.trim().toLowerCase() ?? '';
+  const statusFilter = elements.statusFilter?.value ?? 'all';
 
   return state.nodes.filter((node) => {
-    const matchesQuery = !query || node.name.toLowerCase().includes(query);
+    const name = String(node.name || '');
+    const matchesQuery = !query || name.toLowerCase().includes(query);
     const matchesStatus =
       statusFilter === 'all' ||
       (statusFilter === 'online' && node.online) ||
@@ -47,7 +66,7 @@ function getFilteredNodes() {
 }
 
 function buildNodeLinks(nodeName) {
-  const match = nodeName.match(/^\s*([A-Za-z0-9]+).*?-\s*([A-Za-z0-9]+)\s*$/);
+  const match = String(nodeName || '').match(/^\s*([A-Za-z0-9]+).*?-\s*([A-Za-z0-9]+)\s*$/);
   if (!match) return [];
 
   const cluster = match[1].toLowerCase();
@@ -62,6 +81,7 @@ function buildNodeLinks(nodeName) {
 }
 
 function renderNodeLinks(container, node) {
+  if (!container) return;
   container.replaceChildren();
 
   if (!node.online) {
@@ -89,6 +109,10 @@ function renderNodeLinks(container, node) {
 }
 
 function renderNodes() {
+  if (!elements.nodesGrid) {
+    throw new Error('Missing #nodesGrid element in index.html');
+  }
+
   const filteredNodes = getFilteredNodes();
   elements.nodesGrid.replaceChildren();
 
@@ -100,35 +124,79 @@ function renderNodes() {
   setMessage('');
 
   for (const node of filteredNodes) {
-    const fragment = elements.nodeCardTemplate.content.cloneNode(true);
-    fragment.querySelector('.node-name').textContent = node.name;
-    fragment.querySelector('.node-type').textContent = node.type;
+    if (elements.nodeCardTemplate?.content) {
+      const fragment = elements.nodeCardTemplate.content.cloneNode(true);
+      const nameEl = fragment.querySelector('.node-name');
+      const typeEl = fragment.querySelector('.node-type');
+      const statusPill = fragment.querySelector('.status-pill');
+      const connectionCountEl = fragment.querySelector('.connection-count');
+      const activeAtEl = fragment.querySelector('.active-at');
+      const inactiveAtEl = fragment.querySelector('.inactive-at');
+      const nodeIdEl = fragment.querySelector('.node-id');
+      const linksContainer = fragment.querySelector('.node-links');
 
-    const statusPill = fragment.querySelector('.status-pill');
-    statusPill.textContent = node.status;
+      if (nameEl) nameEl.textContent = node.name || 'Unnamed node';
+      if (typeEl) typeEl.textContent = node.type || 'Tunnel';
+
+      if (statusPill) {
+        statusPill.textContent = node.status || 'unknown';
+        statusPill.classList.add(node.status === 'degraded' ? 'degraded' : node.online ? 'online' : 'offline');
+      }
+
+      if (connectionCountEl) {
+        connectionCountEl.textContent = `${node.activeConnections ?? 0} active / ${node.connectionCount ?? 0} total`;
+      }
+      if (activeAtEl) activeAtEl.textContent = formatDate(node.activeAt);
+      if (inactiveAtEl) inactiveAtEl.textContent = formatDate(node.inactiveAt);
+      if (nodeIdEl) nodeIdEl.textContent = node.id || '—';
+
+      renderNodeLinks(linksContainer, node);
+      elements.nodesGrid.appendChild(fragment);
+      continue;
+    }
+
+    const card = document.createElement('article');
+    card.className = 'node-card';
+    card.innerHTML = `
+      <div class="node-header">
+        <div>
+          <h2 class="node-name"></h2>
+          <p class="node-type"></p>
+        </div>
+        <span class="status-pill"></span>
+      </div>
+      <dl class="node-details">
+        <div><dt>Connections</dt><dd class="connection-count"></dd></div>
+        <div><dt>Active at</dt><dd class="active-at"></dd></div>
+        <div><dt>Inactive at</dt><dd class="inactive-at"></dd></div>
+        <div><dt>ID</dt><dd class="node-id"></dd></div>
+      </dl>
+      <div class="node-links hidden" aria-label="Node links"></div>
+    `;
+
+    card.querySelector('.node-name').textContent = node.name || 'Unnamed node';
+    card.querySelector('.node-type').textContent = node.type || 'Tunnel';
+    const statusPill = card.querySelector('.status-pill');
+    statusPill.textContent = node.status || 'unknown';
     statusPill.classList.add(node.status === 'degraded' ? 'degraded' : node.online ? 'online' : 'offline');
-
-    fragment.querySelector('.connection-count').textContent = `${node.activeConnections} active / ${node.connectionCount} total`;
-    fragment.querySelector('.active-at').textContent = formatDate(node.activeAt);
-    fragment.querySelector('.inactive-at').textContent = formatDate(node.inactiveAt);
-    fragment.querySelector('.node-id').textContent = node.id || '—';
-
-    const linksContainer = fragment.querySelector('.node-links');
-    renderNodeLinks(linksContainer, node);
-
-    elements.nodesGrid.appendChild(fragment);
+    card.querySelector('.connection-count').textContent = `${node.activeConnections ?? 0} active / ${node.connectionCount ?? 0} total`;
+    card.querySelector('.active-at').textContent = formatDate(node.activeAt);
+    card.querySelector('.inactive-at').textContent = formatDate(node.inactiveAt);
+    card.querySelector('.node-id').textContent = node.id || '—';
+    renderNodeLinks(card.querySelector('.node-links'), node);
+    elements.nodesGrid.appendChild(card);
   }
 }
 
-function renderSummary(summary, generatedAt) {
-  elements.totalCount.textContent = summary.total;
-  elements.onlineCount.textContent = summary.online;
-  elements.offlineCount.textContent = summary.offline;
-  elements.generatedAt.textContent = formatDate(generatedAt);
+function renderSummary(summary = {}, generatedAt) {
+  if (elements.totalCount) elements.totalCount.textContent = summary.total ?? 0;
+  if (elements.onlineCount) elements.onlineCount.textContent = summary.online ?? 0;
+  if (elements.offlineCount) elements.offlineCount.textContent = summary.offline ?? 0;
+  if (elements.generatedAt) elements.generatedAt.textContent = formatDate(generatedAt);
 }
 
 async function loadNodes() {
-  elements.refreshButton.disabled = true;
+  if (elements.refreshButton) elements.refreshButton.disabled = true;
   setMessage('Loading nodes…');
 
   try {
@@ -139,19 +207,31 @@ async function loadNodes() {
       throw new Error(payload.detail || payload.error || 'Unknown error');
     }
 
-    state.nodes = payload.nodes || [];
+    state.nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
     renderSummary(payload.summary, payload.generatedAt);
     renderNodes();
   } catch (error) {
     setMessage(`Could not load nodes: ${error.message}`, true);
-    elements.nodesGrid.replaceChildren();
+    if (elements.nodesGrid) {
+      elements.nodesGrid.replaceChildren();
+    }
   } finally {
-    elements.refreshButton.disabled = false;
+    if (elements.refreshButton) elements.refreshButton.disabled = false;
   }
 }
 
-elements.searchInput.addEventListener('input', renderNodes);
-elements.statusFilter.addEventListener('change', renderNodes);
-elements.refreshButton.addEventListener('click', loadNodes);
+function init() {
+  initElements();
 
-loadNodes();
+  elements.searchInput?.addEventListener('input', renderNodes);
+  elements.statusFilter?.addEventListener('change', renderNodes);
+  elements.refreshButton?.addEventListener('click', loadNodes);
+
+  loadNodes();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init, { once: true });
+} else {
+  init();
+}
