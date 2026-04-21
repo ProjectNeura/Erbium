@@ -8,7 +8,7 @@ needs greatly vary across organizations. Our main goal is to build a general and
 scheduling, orchestration, and reinforced file backup. We bring these together using C++ integrated with Python running
 in Docker containers, and services exposed via APIs. With the distributed nodes organized using Cloudflare, we are able
 to manage dozens to hundreds of nodes without hiring any IT ops. Each host machine simply needs to install Erbium and
-run the Docker containers.
+run the Docker containers. It is 99% similar to Vast.ai with very little complexity.
 
 Currently, we only considered hosts with Nvidia GPUs, as they are the most developer-friendly and widely used. You can
 simply fork this repository and replace the driver-related code with your own.
