@@ -1,6 +1,9 @@
 # Erbium
 
-## Introduction
+![GitHub Release](https://img.shields.io/github/v/release/ProjectNeura/Erbium)
+![GitHub Stars](https://img.shields.io/github/stars/ProjectNeura/Erbium)
+
+![poster](assets/poster.png)
 
 Erbium is Project Neura's internal compute platform. It is designed to suit mid-scale organizational needs and 100%
 open-source to avoid concerns about backdoors. We do not aim to provide a user system as it may get too complex and
