@@ -7,7 +7,8 @@ open-source to avoid concerns about backdoors. We do not aim to provide a user s
 needs greatly vary across organizations. Our main goal is to build a general and scalable solution for automatic job
 scheduling, orchestration, and reinforced file backup. We bring these together using C++ integrated with Python running
 in Docker containers, and services exposed via APIs. With the distributed nodes organized using Cloudflare, we are able
-to manage dozens to hundreds of nodes without hiring any IT ops.
+to manage dozens to hundreds of nodes without hiring any IT ops. Each host machine simply needs to install Erbium and
+run the Docker containers.
 
 Currently, we only considered hosts with Nvidia GPUs, as they are the most developer-friendly and widely used. You can
 simply fork this repository and replace the driver-related code with your own.
