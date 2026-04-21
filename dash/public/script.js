@@ -65,13 +65,29 @@ function getFilteredNodes() {
   });
 }
 
-function buildNodeLinks(nodeName) {
-  const match = String(nodeName || '').match(/^\s*([A-Za-z0-9]+).*?-\s*([A-Za-z0-9]+)\s*$/);
-  if (!match) return [];
+function generateSlug(tunnelName) {
+  if (!tunnelName) return null;
 
-  const cluster = match[1].toLowerCase();
-  const nodeCode = match[2].toLowerCase();
-  const slug = `${nodeCode}-${cluster}`;
+  // Get prefix (first word → erbium)
+  const prefix = tunnelName.split(" ")[0].toLowerCase();
+
+  // Get suffix (after last dash)
+  const parts = tunnelName.split("-");
+  if (parts.length < 2) return null;
+
+  let suffix = parts[parts.length - 1].trim();
+
+  // Normalize suffix: lowercase + remove spaces + remove non-alphanumeric
+  suffix = suffix
+    .toLowerCase()
+    .replace(/\s+/g, "")        // remove spaces
+    .replace(/[^a-z0-9]/g, ""); // keep only letters/numbers
+
+  return `${suffix}-${prefix}`;
+}
+
+function buildNodeLinks(nodeName) {
+  const slug = generateSlug(nodeName);
 
   return [
     { label: 'SSH Tunnel', href: `https://${slug}.projectneura.org` },
