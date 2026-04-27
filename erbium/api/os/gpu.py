@@ -24,11 +24,11 @@ def get_all_gpu_info() -> dict[int, GPUInfo]:
     device_count = nvmlDeviceGetCount()
     for i in range(device_count):
         handle = nvmlDeviceGetHandleByIndex(i)
-        utilization_rates = nvmlDeviceGetUtilizationRates(handle)
+        mem_info = nvmlDeviceGetMemoryInfo(handle)
         r[i] = GPUInfo(
-            i, nvmlDeviceGetName(handle), utilization_rates.gpu, utilization_rates.memory,
-            nvmlDeviceGetPowerUsage(handle) / 1000, nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS),
-            nvmlDeviceGetClockInfo(handle, NVML_CLOCK_MEM), nvmlDeviceGetMemoryInfo(handle).total / 1073741824,
-            nvmlDeviceGetFanSpeed(handle),
+            i, nvmlDeviceGetName(handle), nvmlDeviceGetUtilizationRates(handle).gpu,
+            100 * mem_info.used / mem_info.total, nvmlDeviceGetPowerUsage(handle) / 1000,
+            nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS), nvmlDeviceGetClockInfo(handle, NVML_CLOCK_MEM),
+            mem_info.total / 1073741824, nvmlDeviceGetFanSpeed(handle)
         )
     return r

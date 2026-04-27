@@ -12,7 +12,10 @@ requires-python = ">=3.12"
 authors = [
     { name = "Project Neura", email = "central@projectneura.org" }
 ]
-dependencies = ["fastapi", "uvicorn", "pydantic", "pynvml"]
+dependencies = ["fastapi", "uvicorn", "pydantic", "pynvml", "psutil"]
+
+[project.optional-dependencies]
+all = ["py-cpuinfo"]
 
 [tool.hatch.build.targets.sdist]
 only-include = ["erbium"]
