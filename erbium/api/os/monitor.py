@@ -54,14 +54,15 @@ class ResourceMonitor(object):
         plt.close()
 
     def _run(self) -> None:
-        for device, info in get_all_cpu_info().items():
-            self._cpu_util[device].append(info.utilization_percent)
-            self._cpu_mem_util[device].append(info.memory_utilization_percent)
-        for device, info in get_all_gpu_info().items():
-            self._gpu_util[device].append(info.utilization_percent)
-            self._gpu_mem_util[device].append(info.memory_utilization_percent)
-        self.make_plots(f"{self._report_dir}/util.png")
-        sleep(self._interval)
+        while True:
+            for device, info in get_all_cpu_info().items():
+                self._cpu_util[device].append(info.utilization_percent)
+                self._cpu_mem_util[device].append(info.memory_utilization_percent)
+            for device, info in get_all_gpu_info().items():
+                self._gpu_util[device].append(info.utilization_percent)
+                self._gpu_mem_util[device].append(info.memory_utilization_percent)
+            self.make_plots(f"{self._report_dir}/util.png")
+            sleep(self._interval)
 
     def start(self) -> None:
         if not self._process.is_alive():
