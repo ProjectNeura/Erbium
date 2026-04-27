@@ -1,6 +1,7 @@
-from os import PathLike
-from multiprocessing import Process
 from collections import defaultdict
+from multiprocessing import Process
+from os import PathLike
+from time import sleep
 
 from matplotlib import pyplot as plt
 
@@ -60,6 +61,7 @@ class ResourceMonitor(object):
             self._gpu_util[device].append(info.utilization_percent)
             self._gpu_mem_util[device].append(info.memory_utilization_percent)
         self.make_plots(f"{self._report_dir}/util.png")
+        sleep(self._interval)
 
     def start(self) -> None:
         if not self._process.is_alive():
