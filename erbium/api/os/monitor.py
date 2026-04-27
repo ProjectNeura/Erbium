@@ -16,7 +16,7 @@ class ResourceMonitor(object):
         """
         self._report_dir: str = str(report_dir)
         self._interval: float = interval
-        self._process: Process = Process(target=self._run, name="Resource Monitor")
+        self._process: Process = Process(target=self._run, name="Resource Monitor", daemon=True)
         self._cpu_names: dict[int, str] = {device: info.name for device, info in get_all_cpu_info().items()}
         self._cpu_util: dict[int, list[float]] = defaultdict(list)
         self._cpu_mem_util: dict[int, list[float]] = defaultdict(list)
