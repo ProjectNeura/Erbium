@@ -30,6 +30,12 @@ Some facts:
 - Only the output folder "/workspace/output" is backed up every 12 hours
 - Jobs that reach their requested duration will be killed
 
+## Installation
+
+```shell
+pip install git+https://github.com/ProjectNeura/Erbium
+```
+
 ## Accessing an Erbium Node
 
 The username is always "access". You need to schedule a job to set the SSH password.
@@ -72,4 +78,17 @@ python -m erbium docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_
 
 ```shell
 python -m erbium docker run ./docker-compose.yaml SERVICE_NAME
+```
+
+## Using Erbium as a Resource Monitor
+
+Add the following code to your main script.
+
+```python
+from erbium.api import ResourceMonitor
+
+if __name__ == "__main__":
+    monitor = ResourceMonitor("path/to/save/reports")
+    monitor.start()
+    ...  # your job
 ```
