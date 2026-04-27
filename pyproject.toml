@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 authors = [
     { name = "Project Neura", email = "central@projectneura.org" }
 ]
-dependencies = ["fastapi", "uvicorn", "pydantic", "pynvml", "psutil"]
+dependencies = ["fastapi", "uvicorn", "pydantic", "nvidia-ml-py", "psutil"]
 
 [project.optional-dependencies]
 all = ["py-cpuinfo"]
