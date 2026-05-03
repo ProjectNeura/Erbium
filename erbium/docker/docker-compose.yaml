@@ -5,6 +5,8 @@ services:
     container_name: erbium
     networks: [labnet]
     volumes:
+      - erbium_app:/workspace/app
+      - erbium_venv:/workspace/venv
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
@@ -34,15 +36,18 @@ services:
               set -e
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup
-              mkdir -p /var/run/sshd /workspace/app /workspace/venv
+              mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
               groupadd -f video
               groupadd -f render
               usermod -aG video,render access || true
               chown -R access:access /workspace/app /workspace/output /workspace/venv
-              su - access -c "python3.12 -m venv /workspace/venv"
-              su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
+              if [ ! -x /workspace/venv/bin/python ]; then
+                su - access -c "python3.12 -m venv /workspace/venv"
+                su - access -c "/workspace/venv/bin/pip install --upgrade pip"
+                su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
+              fi
               chown root:root /workspace/backup
               chmod 700 /workspace/backup
               if [ ! -f /workspace/backup/config ]; then
@@ -66,3 +71,6 @@ services:
 networks:
   labnet:
     external: true
+volumes:
+  erbium_app:
+  erbium_venv:
