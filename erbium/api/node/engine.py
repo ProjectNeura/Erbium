@@ -14,11 +14,23 @@ class Job(object):
 
 
 class Node(object):
-    JUPYTER_LAB_COMMAND = (
+    JUPYTER_LAB_COMMAND: str = (
         "su - access -c "
         "\"nohup /workspace/venv/bin/jupyter lab --no-browser --port=8080 --ip=0.0.0.0 "
         "--ServerApp.root_dir=/workspace --ServerApp.trust_xheaders=True "
         "--ServerApp.allow_remote_access=True >/tmp/jupyter-lab.log 2>&1 &\""
+    )
+    CLI_LOGOUT_COMMAND: str = (
+        "su - access -c '"
+        "export PATH=/usr/local/bin:$PATH; "
+        "set +e; "
+        "if command -v codex >/dev/null 2>&1; then "
+        "codex logout >/dev/null 2>&1 || codex auth logout >/dev/null 2>&1 || true; "
+        "fi; "
+        "if command -v claude >/dev/null 2>&1; then "
+        "claude logout >/dev/null 2>&1 || claude auth logout >/dev/null 2>&1 || true; "
+        "fi; "
+        "true'"
     )
 
     def __init__(self, *, max_gpu_utilization: float = 15, max_gpu_memory_utilization: float = 15,
@@ -53,8 +65,18 @@ class Node(object):
         kill_all_sessions("access", force=True)
 
     @classmethod
+    def _logout_cli_sessions(cls) -> None:
+        run_command(cls.CLI_LOGOUT_COMMAND)
+
+    @classmethod
     def _restart_jupyter_lab(cls) -> None:
         run_command(cls.JUPYTER_LAB_COMMAND)
+
+    @classmethod
+    def _cleanup_finished_job(cls) -> None:
+        cls._logout_cli_sessions()
+        cls._kill_running_job()
+        cls._restart_jupyter_lab()
 
     def _mark_job_stopped(self) -> None:
         with self._lock:
@@ -77,8 +99,7 @@ class Node(object):
                     job_to_start = self._scheduled_jobs.pop(0)
                     self._transitioning = True
             if job_to_kill:
-                self._kill_running_job()
-                self._restart_jupyter_lab()
+                self._cleanup_finished_job()
                 self._mark_job_stopped()
             if job_to_start:
                 self._start_job(job_to_start)
@@ -103,8 +124,7 @@ class Node(object):
                 should_stop = True
         if not should_stop:
             return False
-        self._kill_running_job()
-        self._restart_jupyter_lab()
+        self._cleanup_finished_job()
         self._mark_job_stopped()
         return True
 
