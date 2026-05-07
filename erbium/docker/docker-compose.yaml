@@ -10,6 +10,7 @@ services:
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
+      - ./skills:/opt/erbium-skills:ro
       - S:/erbium_input:/workspace/input:ro
       - S:/erbium_output:/workspace/output
       - S:/erbium_backup:/workspace/backup
@@ -44,6 +45,9 @@ services:
               groupadd -f render
               usermod -aG video,render access || true
               chown -R access:access /workspace/app /workspace/output /workspace/venv /usr/local/lib/node_modules
+              su - access -c "mkdir -p ~/.claude/skills/use-erbium ~/.codex/skills/use-erbium"
+              su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.claude/skills/use-erbium/SKILL.md"
+              su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.codex/skills/use-erbium/SKILL.md"
               if [ ! -x /workspace/venv/bin/python ]; then
                 su - access -c "python3.12 -m venv /workspace/venv"
                 su - access -c "/workspace/venv/bin/pip install --upgrade pip"
