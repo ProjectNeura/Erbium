@@ -52,7 +52,7 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_containe
     """
     template_path = f"{__DOCKER_DIR__}/docker-compose.yaml"
     if not exists(template_path):
-        raise FileNotFoundError(f"Docker Compose template {template_path} not found, check your installtion")
+        raise FileNotFoundError(f"Docker Compose template {template_path} not found, check your installation")
     with open(template_path) as f:
         template = f.read()
     for term, (original, replacement) in __TERMS_TO_BE_REPLACED__.items():
