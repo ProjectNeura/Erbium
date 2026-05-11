@@ -3,6 +3,7 @@ from datetime import datetime
 from multiprocessing import Process
 from os import PathLike, makedirs
 from time import sleep
+from typing import TextIO
 
 from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
@@ -64,6 +65,64 @@ class ResourceMonitor(object):
         fig.tight_layout()
         fig.savefig(path)
         plt.close(fig)
+
+    def make_report(self, path: str | PathLike[str]) -> None:
+        """
+        Write the minimum, average, and maximum CPU and GPU (memory) utilization rates to a file.
+        :param path: path to save the report
+        """
+        path = str(path)
+        makedirs(self._report_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("Resource Utilization Report\n")
+            if self._timestamps:
+                start = self._timestamps[0]
+                end = self._timestamps[-1]
+                f.write(f"Start time: {start.isoformat(sep=' ', timespec='seconds')}\n")
+                f.write(f"End time: {end.isoformat(sep=' ', timespec='seconds')}\n")
+                f.write(f"Samples: {len(self._timestamps)}\n")
+                f.write(f"Sampling interval (s): {self._interval:g}\n")
+                f.write(f"Duration (s): {(end - start).total_seconds():.2f}\n\n")
+            else:
+                f.write("No samples collected.\n\n")
+            self._write_device_section(f, "CPUs", self._cpu_names, self._cpu_util, self._cpu_mem_util)
+            self._write_device_section(f, "GPUs", self._gpu_names, self._gpu_util, self._gpu_mem_util)
+
+    @staticmethod
+    def _summarize(values: list[float]) -> tuple[float, float, float] | None:
+        if not values:
+            return None
+        return min(values), sum(values) / len(values), max(values)
+
+    def _write_device_section(self, f: TextIO, title: str, names: dict[int, str], utilization: dict[int, list[float]],
+                              memory_utilization: dict[int, list[float]]) -> None:
+        f.write(f"{title}\n")
+        device_ids = sorted(set(names) | set(utilization) | set(memory_utilization))
+        if not device_ids:
+            f.write("  No samples collected.\n\n")
+            return
+        for device in device_ids:
+            label = f"{title[:-1]} {device}"
+            name = names.get(device)
+            if name:
+                label = f"{label}: {name}"
+            f.write(f"  {label}\n")
+            util_stats = self._summarize(utilization.get(device, []))
+            mem_stats = self._summarize(memory_utilization.get(device, []))
+            if util_stats is None and mem_stats is None:
+                f.write("    No samples collected.\n")
+                continue
+            if util_stats is not None:
+                f.write(
+                    "    Utilization (%): "
+                    f"min={util_stats[0]:.2f}, avg={util_stats[1]:.2f}, max={util_stats[2]:.2f}\n"
+                )
+            if mem_stats is not None:
+                f.write(
+                    "    Memory utilization (%): "
+                    f"min={mem_stats[0]:.2f}, avg={mem_stats[1]:.2f}, max={mem_stats[2]:.2f}\n"
+                )
+        f.write("\n")
 
     def _run(self) -> None:
         while True:
