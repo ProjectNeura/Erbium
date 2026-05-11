@@ -136,6 +136,7 @@ class ResourceMonitor(object):
                 self._gpu_util[device].append(info.utilization_percent)
                 self._gpu_mem_util[device].append(info.memory_utilization_percent)
             self.make_plots(f"{self._report_dir}/{self._timestamps[0].strftime('%Y-%m-%d_%H:%M:%S')}.png")
+            self.make_report(f"{self._report_dir}/{self._timestamps[0].strftime('%Y-%m-%d_%H:%M:%S')}.txt")
             sleep(self._interval)
 
     def start(self) -> None:
