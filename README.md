@@ -57,6 +57,15 @@ To use other nodes, simply replace "main" with the name of the node.
 git clone https://github.com/ProjectNeura/Erbium
 ```
 
+### Install the Dependencies
+
+```shell
+cd Erbium
+python -m venv venv
+source venv/bin/activate
+pip install -e .
+```
+
 ### Set Up Cloudflare Tunnel
 
 You need to save the Cloudflare Tunnel token locally as "cloudflared_tunnel_token.txt" in the root directory of the
@@ -71,7 +80,7 @@ python -m erbium docker init
 ### Build a Docker Image
 
 ```shell
-python -m erbium docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR ./docker-compose.yaml
+python -m erbium docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR BACKUP_DIR ./docker-compose.yaml
 ```
 
 ### Start the Docker Container
