@@ -38,6 +38,7 @@ services:
               set -e
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup nodejs npm
+              curl -LsSf https://astral.sh/uv/install.sh | sh
               npm i -g @openai/codex @anthropic-ai/claude-code
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
