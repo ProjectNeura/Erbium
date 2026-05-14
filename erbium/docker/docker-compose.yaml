@@ -7,6 +7,7 @@ services:
     volumes:
       - erbium_app:/workspace/app
       - erbium_venv:/workspace/venv
+      - erbium_pvenvs:/workspace/pvenvs
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
@@ -36,7 +37,7 @@ services:
       bash -lc '
               set -e
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup nodejs npm
+              DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.11 python3.11-venv python3.12 python3.12-venv python3.13 python3.13-venv tmux vim borgbackup nodejs npm
               npm i -g @openai/codex @anthropic-ai/claude-code
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
@@ -44,7 +45,7 @@ services:
               groupadd -f video
               groupadd -f render
               usermod -aG video,render access || true
-              chown -R access:access /workspace/app /workspace/output /workspace/venv /usr/local/lib/node_modules
+              chown -R access:access /workspace/app /workspace/output /workspace/venv /workspace/pvenvs /usr/local/lib/node_modules
               su - access -c "mkdir -p ~/.claude/skills/use-erbium ~/.codex/skills/use-erbium"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.claude/skills/use-erbium/SKILL.md"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.codex/skills/use-erbium/SKILL.md"
@@ -79,3 +80,4 @@ networks:
 volumes:
   erbium_app:
   erbium_venv:
+  erbium_pvenvs:
