@@ -54,7 +54,7 @@ services:
                 su - access -c "/workspace/venv/bin/pip install --upgrade pip"
                 su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
               fi
-              curl -LsSf https://astral.sh/uv/install.sh | sh
+              su - access -c "curl -LsSf https://astral.sh/uv/install.sh | sh"
               chown root:root /workspace/backup
               chmod 700 /workspace/backup
               if [ ! -f /workspace/backup/config ]; then
