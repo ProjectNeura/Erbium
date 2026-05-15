@@ -68,20 +68,21 @@ function getFilteredNodes() {
 function generateSlug(tunnelName) {
   if (!tunnelName) return null;
 
-  // Get prefix (first word → erbium)
-  const prefix = tunnelName.split(" ")[0].toLowerCase();
+  const prefix = tunnelName.split(' ')[0]?.toLowerCase();
+  if (!prefix) return null;
 
-  // Get suffix (after last dash)
-  const parts = tunnelName.split("-");
+  const parts = tunnelName.split('-');
   if (parts.length < 2) return null;
 
-  let suffix = parts[parts.length - 1].trim();
+  const gatewayMatch = tunnelName.match(/\bGateway\s+([A-Za-z0-9]+)\b/i);
+  const gatewayId = gatewayMatch?.[1]?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? '';
 
-  // Normalize suffix: lowercase + remove spaces + remove non-alphanumeric
-  suffix = suffix
-    .toLowerCase()
-    .replace(/\s+/g, "")        // remove spaces
-    .replace(/[^a-z0-9]/g, ""); // keep only letters/numbers
+  let suffix = parts[parts.length - 1].trim().toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+  if (!suffix) return null;
+
+  if (gatewayId) {
+    suffix = `${suffix}${gatewayId}`;
+  }
 
   return `${suffix}-${prefix}`;
 }

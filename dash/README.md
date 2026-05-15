@@ -68,10 +68,10 @@ functions/
 
 ## Tunnel link naming
 
-For tunnel names like `Erbium Gateway A - 4090` or `Erbium Gateway B - 5090`, the dashboard generates:
+For tunnel names like `Erbium Gateway A - 4090` or `Erbium Gateway E - 5090`, the dashboard generates:
 
-- `https://4090-erbium.projectneura.org`
-- `https://jupyter-4090-erbium.projectneura.org`
-- `https://node-4090-erbium.projectneura.org/dash`
+- `https://4090a-erbium.projectneura.org`
+- `https://jupyter-4090a-erbium.projectneura.org`
+- `https://node-4090a-erbium.projectneura.org/dash`
 
-It uses the first word in the tunnel name as the cluster slug (`erbium`) and the suffix after the last dash as the node code (`4090`, `5090`, etc.). Offline nodes do not show these buttons.
+It uses the first word in the tunnel name as the cluster slug (`erbium`), the suffix after the last dash as the node code (`4090`, `5090`, etc.), and appends the gateway ID (`a`, `e`, etc.) from the `Gateway X` segment. Offline nodes do not show these buttons.
