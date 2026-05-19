@@ -8,46 +8,82 @@
       <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ProjectNeura/ProjectNeura/5ea0c73a40ad560e179c152ff3660d03924ef6e1/img/logo.png" />
   </head>
   <body>
+    <div class="ambient ambient-left" aria-hidden="true"></div>
+    <div class="ambient ambient-right" aria-hidden="true"></div>
+
     <div class="page-shell">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">Erbium Nodes</p>
-          <h1>Erbium Dashboard</h1>
-          <p class="subtitle">
-            Below are all the registered nodes and their status.
-          </p>
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">E</div>
+          <div>
+            <p class="eyebrow">Erbium Nodes</p>
+            <p class="brand-name">Operations Dashboard</p>
+          </div>
         </div>
-        <div class="hero-actions">
-          <button id="refreshButton" class="button">Refresh</button>
+        <div class="topbar-actions">
+          <span class="live-indicator">
+            <span class="live-dot" aria-hidden="true"></span>
+            Live status
+          </span>
+          <button id="refreshButton" class="button button-primary">Refresh</button>
         </div>
       </header>
 
-      <section class="stats" id="stats">
-        <article class="stat-card">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Overview</p>
+          <h1>Erbium Dashboard</h1>
+          <p class="subtitle">
+            Monitor registered nodes, connection activity, and operational status from a single surface.
+          </p>
+        </div>
+
+        <div class="hero-summary">
+          <p class="summary-label">Fleet health</p>
+          <div class="summary-metric">
+            <strong id="onlineCount">—</strong>
+            <span>online nodes</span>
+          </div>
+          <p class="summary-note">
+            Updated <span id="generatedAt">—</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="stats" id="stats" aria-label="Node summary">
+        <article class="stat-card stat-card-primary">
           <span class="stat-label">Total nodes</span>
           <strong id="totalCount">—</strong>
+          <span class="stat-footnote">Active inventory across the network</span>
         </article>
         <article class="stat-card">
-          <span class="stat-label">Online</span>
-          <strong id="onlineCount">—</strong>
+          <span class="stat-label">Available now</span>
+          <strong id="onlineMirror">—</strong>
+          <span class="stat-footnote">Currently reachable nodes</span>
         </article>
         <article class="stat-card">
-          <span class="stat-label">Offline</span>
+          <span class="stat-label">Needs attention</span>
           <strong id="offlineCount">—</strong>
-        </article>
-        <article class="stat-card">
-          <span class="stat-label">Last updated</span>
-          <strong id="generatedAt">—</strong>
+          <span class="stat-footnote">Offline or unavailable nodes</span>
         </article>
       </section>
 
       <section class="toolbar">
-        <input id="searchInput" type="search" placeholder="Search nodes by name" />
-        <select id="statusFilter">
-          <option value="all">All statuses</option>
-          <option value="online">Online only</option>
-          <option value="offline">Offline only</option>
-        </select>
+        <div class="toolbar-copy">
+          <p class="toolbar-title">Nodes</p>
+          <p class="toolbar-subtitle">Filter the fleet by name or availability.</p>
+        </div>
+        <div class="toolbar-controls">
+          <label class="search-field" for="searchInput">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="searchInput" type="search" placeholder="Search nodes by name" />
+          </label>
+          <select id="statusFilter" aria-label="Filter nodes by status">
+            <option value="all">All statuses</option>
+            <option value="online">Online only</option>
+            <option value="offline">Offline only</option>
+          </select>
+        </div>
       </section>
 
       <main>
@@ -59,7 +95,7 @@
     <template id="nodeCardTemplate">
       <article class="node-card">
         <div class="node-header">
-          <div>
+          <div class="node-heading">
             <h2 class="node-name"></h2>
             <p class="node-type"></p>
           </div>

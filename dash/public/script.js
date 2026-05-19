@@ -9,6 +9,7 @@ function byId(id) {
 const elements = {
   totalCount: null,
   onlineCount: null,
+  onlineMirror: null,
   offlineCount: null,
   generatedAt: null,
   nodesGrid: null,
@@ -22,6 +23,7 @@ const elements = {
 function initElements() {
   elements.totalCount = byId('totalCount');
   elements.onlineCount = byId('onlineCount');
+  elements.onlineMirror = byId('onlineMirror');
   elements.offlineCount = byId('offlineCount');
   elements.generatedAt = byId('generatedAt');
   elements.nodesGrid = byId('nodesGrid');
@@ -208,6 +210,7 @@ function renderNodes() {
 function renderSummary(summary = {}, generatedAt) {
   if (elements.totalCount) elements.totalCount.textContent = summary.total ?? 0;
   if (elements.onlineCount) elements.onlineCount.textContent = summary.online ?? 0;
+  if (elements.onlineMirror) elements.onlineMirror.textContent = summary.online ?? 0;
   if (elements.offlineCount) elements.offlineCount.textContent = summary.offline ?? 0;
   if (elements.generatedAt) elements.generatedAt.textContent = formatDate(generatedAt);
 }
