@@ -13,6 +13,7 @@ def __entry__() -> None:
     docker_sub = docker_parser.add_subparsers(dest="docker_cmd", required=True)
     docker_init = docker_sub.add_parser("init")
     docker_init.add_argument("-n", "--shared_network", default=__DEFAULT_SHARED_NETWORK__)
+    docker_init.add_argument("--protocol", choices=["quic", "http2"], default="quic")
     docker_create = docker_sub.add_parser("create")
     docker_create.add_argument("-n", "--service_name", required=True)
     docker_create.add_argument("-p", "--password", required=True)
@@ -38,7 +39,8 @@ def __entry__() -> None:
             match args.docker_cmd:
                 case "init":
                     with open("cloudflared_tunnel_token.txt") as f:
-                        run_command(command_to_initialize_docker(f.read().strip(), shared_network=args.shared_network))
+                        run_command(command_to_initialize_docker(f.read().strip(), protocol=args.protocol,
+                                                                 shared_network=args.shared_network))
                 case "create":
                     with open(args.save_as, "w") as f:
                         f.write(create_docker_compose(
