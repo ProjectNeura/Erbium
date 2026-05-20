@@ -18,6 +18,7 @@ def __entry__() -> None:
     docker_create.add_argument("-n", "--service_name", required=True)
     docker_create.add_argument("-p", "--password", required=True)
     docker_create.add_argument("-b", "--base_container", default=__DEFAULT_BASE_CONTAINER__)
+    docker_create.add_argument("--gpus", action="append", default=["all"], help="List of GPU IDs to use, or \"all\" for all available GPUs")
     docker_create.add_argument("input_dir")
     docker_create.add_argument("output_dir")
     docker_create.add_argument("backup_dir")
@@ -46,7 +47,7 @@ def __entry__() -> None:
                         f.write(create_docker_compose(
                             args.service_name, args.password, base_container=args.base_container,
                             hostname=args.service_name, container_name=args.service_name, input_dir=args.input_dir,
-                            output_dir=args.output_dir, backup_dir=args.backup_dir
+                            output_dir=args.output_dir, backup_dir=args.backup_dir, gpus=args.gpus
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(
