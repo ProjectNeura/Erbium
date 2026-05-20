@@ -38,6 +38,7 @@ services:
               set -e
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup nodejs npm
+              curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_UNMANAGED_INSTALL=1 sh
               npm i -g @openai/codex @anthropic-ai/claude-code
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
@@ -50,9 +51,8 @@ services:
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.claude/skills/use-erbium/SKILL.md"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.codex/skills/use-erbium/SKILL.md"
               if [ ! -x /workspace/venv/bin/python ]; then
-                su - access -c "python3.12 -m venv /workspace/venv"
-                su - access -c "/workspace/venv/bin/pip install --upgrade pip"
-                su - access -c "/workspace/venv/bin/pip install torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
+                su - access -c "uv venv --python python3.12 /workspace/venv"
+                su - access -c "uv pip install --python /workspace/venv/bin/python torch torchvision jupyterlab git+https://github.com/ProjectNeura/Erbium"
               fi
               su - access -c "curl -LsSf https://astral.sh/uv/install.sh | sh"
               chown root:root /workspace/backup
