@@ -18,7 +18,7 @@ def __entry__() -> None:
     docker_create.add_argument("-n", "--service_name", required=True)
     docker_create.add_argument("-p", "--password", required=True)
     docker_create.add_argument("-b", "--base_container", default=__DEFAULT_BASE_CONTAINER__)
-    docker_create.add_argument("--gpus", action="append", default=["all"], help="List of GPU IDs to use, or \"all\" for all available GPUs")
+    docker_create.add_argument("--gpus", action="+", default=["all"], help="List of GPU IDs to use, or \"all\" for all available GPUs")
     docker_create.add_argument("input_dir")
     docker_create.add_argument("output_dir")
     docker_create.add_argument("backup_dir")
