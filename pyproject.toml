@@ -30,4 +30,4 @@ Repository = "https://github.com/ProjectNeura/Erbium"
 
 [project.scripts]
 erbium = "erbium:__entry__"
-erbium_on_vast = "eribum_on_vast:__entry__"
+erbium-on-vast = "eribum_on_vast:__entry__"

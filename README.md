@@ -80,13 +80,13 @@ python -m erbium docker init
 ### Build a Docker Image
 
 ```shell
-python -m erbium docker create -n SERVICE_NAME -p SSH_PASSWORD INPUT_DIR OUTPUT_DIR BACKUP_DIR ./docker-compose.yaml
+python -m erbium docker create -n ${SERVICE_NAME} -p ${SSH_PASSWORD} ${INPUT_DIR} ${OUTPUT_DIR} ${BACKUP_DIR} ./docker-compose.yaml
 ```
 
 ### Start the Docker Container
 
 ```shell
-python -m erbium docker run ./docker-compose.yaml SERVICE_NAME
+python -m erbium docker run ./docker-compose.yaml ${SERVICE_NAME}
 ```
 
 ## Using Erbium as a Resource Monitor
@@ -100,4 +100,27 @@ if __name__ == "__main__":
     monitor = ResourceMonitor("path/to/save/reports")
     monitor.start()
     ...  # your job
+```
+
+## Using Erbium on Vast
+
+### Initialize the Machine
+
+You need an access token from Hugging Face that can access the bucket. You can specify the bucket to use by setting
+`--hf_bucket ${BUCKET_NAME}`. By default, it will use the bucket `ProjectNeura/ErbiumOnVast`.
+
+```shell
+python -m erbium_on_vast init ${NODE_ID} --hf_token ${HF_TOKEN}
+```
+
+### Upload the Workspace to Hugging Face
+
+```shell
+python -m erbium_on_vast upload
+```
+
+### Download the Workspace from Hugging Face
+
+```shell
+python -m erbium_on_vast download
 ```
