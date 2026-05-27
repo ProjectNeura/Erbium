@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from erbium_on_vast.functional import initialize, upload_workspace, download_workspace
+from erbium_on_vast.functional import initialize, upload_workspace, download_workspace, remove_workspace
 
 
 def __entry__() -> None:
@@ -19,6 +19,10 @@ def __entry__() -> None:
     download_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
     download_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",
                                  help="The Hugging Face bucket to download the workspace from")
+    remove_parser = subparsers.add_parser("remove")
+    remove_parser.add_argument("--node_id", default=None, help="The ID of the node to remove")
+    remove_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",
+                                 help="The Hugging Face bucket to download the workspace from")
     args = parser.parse_args()
     match args.action:
         case "init":
@@ -27,3 +31,5 @@ def __entry__() -> None:
             upload_workspace(args.ignore, workspace=args.workspace, hf_bucket=args.hf_bucket)
         case "download":
             download_workspace(workspace=args.workspace, hf_bucket=args.hf_bucket)
+        case "remove":
+            remove_workspace(node_id=args.node_id, hf_bucket=args.hf_bucket)
