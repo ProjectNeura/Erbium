@@ -12,16 +12,16 @@ requires-python = ">=3.12"
 authors = [
     { name = "Project Neura", email = "central@projectneura.org" }
 ]
-dependencies = ["fastapi", "uvicorn", "pydantic", "nvidia-ml-py", "psutil", "matplotlib"]
+dependencies = ["fastapi", "uvicorn", "pydantic", "nvidia-ml-py", "psutil", "matplotlib", "huggingface-hub"]
 
 [project.optional-dependencies]
 all = ["py-cpuinfo"]
 
 [tool.hatch.build.targets.sdist]
-only-include = ["erbium"]
+only-include = ["erbium", "erbium_on_vast"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["erbium"]
+packages = ["erbium", "erbium_on_vast"]
 
 [project.urls]
 Homepage = "https://github.com/ProjectNeura/Erbium"
@@ -30,3 +30,4 @@ Repository = "https://github.com/ProjectNeura/Erbium"
 
 [project.scripts]
 erbium = "erbium:__entry__"
+erbium_on_vast = "eribum_on_vast:__entry__"
