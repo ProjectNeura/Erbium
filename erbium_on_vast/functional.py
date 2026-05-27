@@ -10,7 +10,7 @@ _INIT_SCRIPT: str = f"{abspath(__file__)[:-13]}init.sh"
 _WORKSPACE_PATH: Path = Path("/workspace")
 _NODE_ID_PATH: Path = _WORKSPACE_PATH / "node_id"
 _HF_TOKEN_PATH: Path = _WORKSPACE_PATH / "hf_token"
-_IGNORE_PATTERNS: list[str] = ["hf_token", "input/**", "venv/**", "pvenv/**", ".cache/huggingface/**"]
+_IGNORE_PATTERNS: list[str] = ["hf_token", "input/**", "venv/**", "pvenvs/**", ".cache/huggingface/**", ".hf_home/**"]
 
 
 def set_node_id(node_id: str) -> None:
