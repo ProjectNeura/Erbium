@@ -8,7 +8,7 @@ def __entry__() -> None:
                             epilog="GitHub: https://github.com/ProjectNeura/Erbium")
     subparsers = parser.add_subparsers(dest="action", required=True)
     init_parser = subparsers.add_parser("init")
-    init_parser.add_argument("node_id", help="The ID of this node")
+    init_parser.add_argument("--node_id", required=True, help="The ID of this node")
     init_parser.add_argument("--hf_token", required=True, help="The Hugging Face token")
     upload_parser = subparsers.add_parser("upload")
     upload_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")

@@ -110,7 +110,7 @@ You need an access token from Hugging Face that can access the bucket. You can s
 `--hf_bucket ${BUCKET_NAME}`. By default, it will use the bucket `ProjectNeura/ErbiumOnVast`.
 
 ```shell
-python -m erbium_on_vast init ${NODE_ID} --hf_token ${HF_TOKEN}
+python -m erbium_on_vast init --node_id ${NODE_ID} --hf_token ${HF_TOKEN}
 ```
 
 ### Upload the Workspace to Hugging Face
