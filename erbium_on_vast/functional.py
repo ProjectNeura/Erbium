@@ -2,6 +2,7 @@ from os import PathLike
 from os.path import abspath
 from pathlib import Path
 from subprocess import run
+from tempfile import TemporaryDirectory
 
 from huggingface_hub import HfApi, create_bucket, sync_bucket
 
@@ -57,23 +58,31 @@ def _create_bucket(hf_bucket: str) -> str:
     return bucket_url.bucket_id
 
 
-def _get_bucket_prefix() -> str:
-    node_id = get_node_id()
+def _get_bucket_prefix(node_id: str | None = None) -> str:
+    if node_id is None:
+        node_id = get_node_id()
+    node_id = node_id.strip().strip("/")
     if not node_id:
         raise ValueError("The stored node_id is empty. Run initialize(node_id, hf_token) first.")
     return node_id
 
 
-def _get_bucket_uri(bucket_id: str) -> str:
-    return f"hf://buckets/{bucket_id}/{_get_bucket_prefix()}"
+def _get_bucket_uri(bucket_id: str, *, node_id: str | None = None) -> str:
+    return f"hf://buckets/{bucket_id}/{_get_bucket_prefix(node_id)}"
 
 
-def _sync_bucket(source: str | Path, destination: str | Path, ignore: list[str], *, delete: bool = False) -> None:
+def _sync_bucket(source: str | Path, destination: str | Path, *, ignore: list[str] | None = None, delete: bool = False,
+                 use_default_ignore: bool = True) -> None:
+    exclude = []
+    if use_default_ignore:
+        exclude.extend(_IGNORE_PATTERNS)
+    if ignore:
+        exclude.extend(ignore)
     sync_bucket(
         str(source),
         str(destination),
         delete=delete,
-        exclude=_IGNORE_PATTERNS + ignore,
+        exclude=exclude,
         token=get_hf_token()
     )
 
@@ -84,7 +93,7 @@ def upload_workspace(ignore: list[str], *, workspace: str | PathLike[str] = "/wo
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"Workspace directory not found: {workspace_path}")
     bucket_id = _create_bucket(hf_bucket)
-    _sync_bucket(workspace_path, _get_bucket_uri(bucket_id), ignore, delete=True)
+    _sync_bucket(workspace_path, _get_bucket_uri(bucket_id), ignore=ignore, delete=True)
 
 
 def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
@@ -92,4 +101,15 @@ def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
     workspace_path = Path(workspace).expanduser().resolve()
     workspace_path.mkdir(parents=True, exist_ok=True)
     bucket_id = _get_bucket_id(hf_bucket)
-    _sync_bucket(_get_bucket_uri(bucket_id), workspace_path, [])
+    _sync_bucket(_get_bucket_uri(bucket_id), workspace_path)
+
+
+def remove_workspace(*, node_id: str | None = None, hf_bucket: str = "ProjectNeura/ErbiumOnVast") -> None:
+    bucket_id = _get_bucket_id(hf_bucket)
+    with TemporaryDirectory() as empty_dir:
+        _sync_bucket(
+            Path(empty_dir),
+            _get_bucket_uri(bucket_id, node_id=node_id),
+            delete=True,
+            use_default_ignore=False
+        )
