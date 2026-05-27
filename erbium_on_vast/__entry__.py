@@ -24,6 +24,6 @@ def __entry__() -> None:
         case "init":
             initialize(args.node_id, args.hf_token)
         case "upload":
-            upload_workspace(workspace=args.workspace, hf_bucket=args.hf_bucket)
+            upload_workspace(args.ignore, workspace=args.workspace, hf_bucket=args.hf_bucket)
         case "download":
             download_workspace(workspace=args.workspace, hf_bucket=args.hf_bucket)
