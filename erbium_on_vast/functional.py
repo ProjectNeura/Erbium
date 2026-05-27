@@ -62,7 +62,8 @@ def _get_revision() -> str:
     return node_id
 
 
-def upload_workspace(*, workspace: str | PathLike[str] = "/workspace", hf_repo: str = "ErbiumOnVast") -> None:
+def upload_workspace(*, workspace: str | PathLike[str] = "/workspace",
+                     hf_repo: str = "ProjectNeura/ErbiumOnVast") -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"Workspace directory not found: {workspace_path}")
@@ -84,7 +85,8 @@ def upload_workspace(*, workspace: str | PathLike[str] = "/workspace", hf_repo: 
     )
 
 
-def download_workspace(*, workspace: str | PathLike[str] = "/workspace", hf_repo: str = "ErbiumOnVast") -> None:
+def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
+                       hf_repo: str = "ProjectNeura/ErbiumOnVast") -> None:
     token = get_hf_token()
     revision = _get_revision()
     api = _get_hf_api()
