@@ -11,9 +11,6 @@ PVENVS_DIR="${PVENVS_DIR:-${WORKSPACE}/pvenvs}"
 PYTHON_BIN="${PYTHON_BIN:-python3.12}"
 UV_BIN="${UV_BIN:-${ROOT_HOME}/.local/bin/uv}"
 ERBIUM_PACKAGE="${ERBIUM_PACKAGE:-git+https://github.com/ProjectNeura/Erbium}"
-JUPYTER_PORT="${JUPYTER_PORT:-8080}"
-ERBIUM_PORT="${ERBIUM_PORT:-8000}"
-START_SERVICES="${START_SERVICES:-1}"
 
 export NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-all}"
 export NVIDIA_DRIVER_CAPABILITIES="${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}"
@@ -162,25 +159,15 @@ install_uv_and_python_env() {
     HOME="${ROOT_HOME}" "${UV_BIN}" venv --python "${PYTHON_BIN}" "${VENV_DIR}"
   fi
 
-  if ! "${VENV_DIR}/bin/python" -c "import erbium, huggingface_hub, jupyterlab, torch, torchvision" >/dev/null 2>&1; then
+  if ! "${VENV_DIR}/bin/python" -c "import erbium, huggingface_hub, torch, torchvision" >/dev/null 2>&1; then
     log "Installing Python packages"
-    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision jupyterlab huggingface-hub "${ERBIUM_PACKAGE}"
+    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision huggingface-hub "${ERBIUM_PACKAGE}"
   fi
 }
 
 configure_process_limits() {
   ulimit -l unlimited >/dev/null 2>&1 || true
   ulimit -s 65536 >/dev/null 2>&1 || true
-}
-
-start_services() {
-  log "Starting services"
-
-  if ! pgrep -f "jupyter-lab.*--port=${JUPYTER_PORT}" >/dev/null 2>&1; then
-    HOME="${ROOT_HOME}" "${VENV_DIR}/bin/jupyter" lab --no-browser --allow-root --port="${JUPYTER_PORT}" --ip=0.0.0.0 --ServerApp.root_dir="${WORKSPACE}" --ServerApp.trust_xheaders=True --ServerApp.allow_remote_access=True &
-  fi
-
-  exec "${VENV_DIR}/bin/python" -m erbium server run -p "${ERBIUM_PORT}"
 }
 
 main() {
@@ -193,10 +180,6 @@ main() {
   configure_skills
   install_uv_and_python_env
   configure_process_limits
-
-  if [ "${START_SERVICES}" = "1" ]; then
-    start_services
-  fi
 
   log "Environment setup complete"
 }
