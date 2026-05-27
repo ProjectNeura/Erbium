@@ -14,6 +14,7 @@ def __entry__() -> None:
     upload_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
     upload_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",
                                help="The Hugging Face bucket to upload the workspace to")
+    upload_parser.add_argument("--ignore", nargs="+", default=[], help="Patterns to ignore when uploading the workspace")
     download_parser = subparsers.add_parser("download")
     download_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
     download_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",

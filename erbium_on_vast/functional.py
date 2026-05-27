@@ -9,7 +9,7 @@ _INIT_SCRIPT: str = f"{abspath(__file__)[:-13]}init.sh"
 _WORKSPACE_PATH: Path = Path("/workspace")
 _NODE_ID_PATH: Path = _WORKSPACE_PATH / "node_id"
 _HF_TOKEN_PATH: Path = _WORKSPACE_PATH / "hf_token"
-_IGNORE_PATTERNS: list[str] = ["hf_token", ".cache/huggingface/**"]
+_IGNORE_PATTERNS: list[str] = ["hf_token", "input/**", ".cache/huggingface/**"]
 
 
 def set_node_id(node_id: str) -> None:
@@ -68,23 +68,23 @@ def _get_bucket_uri(bucket_id: str) -> str:
     return f"hf://buckets/{bucket_id}/{_get_bucket_prefix()}"
 
 
-def _sync_bucket(source: str | Path, destination: str | Path, *, delete: bool = False) -> None:
+def _sync_bucket(source: str | Path, destination: str | Path, ignore: list[str], *, delete: bool = False) -> None:
     sync_bucket(
         str(source),
         str(destination),
         delete=delete,
-        exclude=_IGNORE_PATTERNS,
+        exclude=_IGNORE_PATTERNS + ignore,
         token=get_hf_token()
     )
 
 
-def upload_workspace(*, workspace: str | PathLike[str] = "/workspace",
+def upload_workspace(ignore: list[str], *, workspace: str | PathLike[str] = "/workspace",
                      hf_bucket: str = "ProjectNeura/ErbiumOnVast") -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"Workspace directory not found: {workspace_path}")
     bucket_id = _create_bucket(hf_bucket)
-    _sync_bucket(workspace_path, _get_bucket_uri(bucket_id), delete=True)
+    _sync_bucket(workspace_path, _get_bucket_uri(bucket_id), ignore, delete=True)
 
 
 def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
@@ -92,4 +92,4 @@ def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
     workspace_path = Path(workspace).expanduser().resolve()
     workspace_path.mkdir(parents=True, exist_ok=True)
     bucket_id = _get_bucket_id(hf_bucket)
-    _sync_bucket(_get_bucket_uri(bucket_id), workspace_path)
+    _sync_bucket(_get_bucket_uri(bucket_id), workspace_path, [])
