@@ -1,18 +1,28 @@
 from argparse import ArgumentParser
 
-from erbium_on_vast.functional import initialize, upload_workspace
+from erbium_on_vast.functional import initialize, upload_workspace, download_workspace
 
 
 def __entry__() -> None:
     parser = ArgumentParser(prog="Erbium on Vast", description="Erbium Compute Platform on Vast.ai",
                             epilog="GitHub: https://github.com/ProjectNeura/Erbium")
     subparsers = parser.add_subparsers(dest="action", required=True)
-    docker_parser = subparsers.add_parser("init")
-    docker_parser.add_argument("node_id", help="The ID of this node")
-    docker_parser.add_argument("--hf_token", required=True, help="The Hugging Face token")
+    init_parser = subparsers.add_parser("init")
+    init_parser.add_argument("node_id", help="The ID of this node")
+    init_parser.add_argument("--hf_token", required=True, help="The Hugging Face token")
+    upload_parser = subparsers.add_parser("upload")
+    upload_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
+    upload_parser.add_argument("--hf_repo", default="ErbiumOnVast",
+                               help="The Hugging Face repository to upload the workspace to")
+    download_parser = subparsers.add_parser("download")
+    download_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
+    download_parser.add_argument("--hf_repo", default="ErbiumOnVast",
+                                 help="The Hugging Face repository to download the workspace from")
     args = parser.parse_args()
     match args.action:
         case "init":
             initialize(args.node_id, args.hf_token)
         case "upload":
-            upload_workspace()
+            upload_workspace(workspace=args.workspace, hf_repo=args.hf_repo)
+        case "download":
+            download_workspace(workspace=args.workspace, hf_repo=args.hf_repo)
