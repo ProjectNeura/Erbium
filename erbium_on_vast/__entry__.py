@@ -8,10 +8,11 @@ def __entry__() -> None:
                             epilog="GitHub: https://github.com/ProjectNeura/Erbium")
     subparsers = parser.add_subparsers(dest="action", required=True)
     docker_parser = subparsers.add_parser("init")
-    docker_parser.add_argument("node_id", required=True, help="The ID of this node")
+    docker_parser.add_argument("node_id", help="The ID of this node")
+    docker_parser.add_argument("--hf_token", required=True, help="The Hugging Face token")
     args = parser.parse_args()
     match args.action:
         case "init":
-            initialize(args.init)
+            initialize(args.node_id, args.hf_token)
         case "upload":
             upload_workspace()
