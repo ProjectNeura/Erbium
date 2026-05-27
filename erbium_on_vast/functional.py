@@ -2,10 +2,10 @@ from os import PathLike
 from os.path import abspath
 from pathlib import Path
 from subprocess import run
-from huggingface_hub import HfApi, snapshot_download
+
+from huggingface_hub import HfApi, create_bucket, sync_bucket
 
 _INIT_SCRIPT: str = f"{abspath(__file__)[:-13]}init.sh"
-_WORKSPACE_REPO_TYPE: str = "dataset"
 _WORKSPACE_PATH: Path = Path("/workspace")
 _NODE_ID_PATH: Path = _WORKSPACE_PATH / "node_id"
 _HF_TOKEN_PATH: Path = _WORKSPACE_PATH / "hf_token"
@@ -41,62 +41,55 @@ def initialize(node_id: str, hf_token: str) -> None:
 
 
 def _get_hf_api() -> HfApi:
-    try:
-        from huggingface_hub import HfApi
-    except ImportError as exc:
-        raise RuntimeError("Install huggingface-hub to upload or download a workspace.") from exc
     return HfApi(token=get_hf_token())
 
 
-def _get_repo_id(api: HfApi, hf_repo: str) -> str:
-    if "/" in hf_repo:
-        return hf_repo
+def _get_bucket_id(hf_bucket: str) -> str:
+    if "/" in hf_bucket:
+        return hf_bucket
+    api = _get_hf_api()
     user = api.whoami()
-    return f"{user['name']}/{hf_repo}"
+    return f"{user['name']}/{hf_bucket}"
 
 
-def _get_revision() -> str:
+def _create_bucket(hf_bucket: str) -> str:
+    bucket_url = create_bucket(hf_bucket, private=True, exist_ok=True, token=get_hf_token())
+    return bucket_url.bucket_id
+
+
+def _get_bucket_prefix() -> str:
     node_id = get_node_id()
     if not node_id:
         raise ValueError("The stored node_id is empty. Run initialize(node_id, hf_token) first.")
     return node_id
 
 
+def _get_bucket_uri(bucket_id: str) -> str:
+    return f"hf://buckets/{bucket_id}/{_get_bucket_prefix()}"
+
+
+def _sync_bucket(source: str | Path, destination: str | Path, *, delete: bool = False) -> None:
+    sync_bucket(
+        str(source),
+        str(destination),
+        delete=delete,
+        exclude=_IGNORE_PATTERNS,
+        token=get_hf_token()
+    )
+
+
 def upload_workspace(*, workspace: str | PathLike[str] = "/workspace",
-                     hf_repo: str = "ProjectNeura/ErbiumOnVast") -> None:
+                     hf_bucket: str = "ProjectNeura/ErbiumOnVast") -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"Workspace directory not found: {workspace_path}")
-    token = get_hf_token()
-    revision = _get_revision()
-    api = _get_hf_api()
-    repo_id = _get_repo_id(api, hf_repo)
-    api.create_repo(repo_id=repo_id, repo_type=_WORKSPACE_REPO_TYPE, private=True, exist_ok=True)
-    api.create_branch(repo_id=repo_id, branch=revision, repo_type=_WORKSPACE_REPO_TYPE, exist_ok=True)
-    api.upload_folder(
-        repo_id=repo_id,
-        folder_path=workspace_path,
-        repo_type=_WORKSPACE_REPO_TYPE,
-        revision=revision,
-        token=token,
-        ignore_patterns=_IGNORE_PATTERNS,
-        delete_patterns="*",
-        commit_message=f"Upload workspace from {revision}"
-    )
+    bucket_id = _create_bucket(hf_bucket)
+    _sync_bucket(workspace_path, _get_bucket_uri(bucket_id), delete=True)
 
 
 def download_workspace(*, workspace: str | PathLike[str] = "/workspace",
-                       hf_repo: str = "ProjectNeura/ErbiumOnVast") -> None:
-    token = get_hf_token()
-    revision = _get_revision()
-    api = _get_hf_api()
-    repo_id = _get_repo_id(api, hf_repo)
+                       hf_bucket: str = "ProjectNeura/ErbiumOnVast") -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     workspace_path.mkdir(parents=True, exist_ok=True)
-    snapshot_download(
-        repo_id=repo_id,
-        repo_type=_WORKSPACE_REPO_TYPE,
-        revision=revision,
-        local_dir=workspace_path,
-        token=token
-    )
+    bucket_id = _get_bucket_id(hf_bucket)
+    _sync_bucket(_get_bucket_uri(bucket_id), workspace_path)

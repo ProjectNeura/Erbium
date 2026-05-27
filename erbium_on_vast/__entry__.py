@@ -12,17 +12,17 @@ def __entry__() -> None:
     init_parser.add_argument("--hf_token", required=True, help="The Hugging Face token")
     upload_parser = subparsers.add_parser("upload")
     upload_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
-    upload_parser.add_argument("--hf_repo", default="ProjectNeura/ErbiumOnVast",
-                               help="The Hugging Face repository to upload the workspace to")
+    upload_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",
+                               help="The Hugging Face bucket to upload the workspace to")
     download_parser = subparsers.add_parser("download")
     download_parser.add_argument("--workspace", default="/workspace", help="The path to the workspace directory")
-    download_parser.add_argument("--hf_repo", default="ProjectNeura/ErbiumOnVast",
-                                 help="The Hugging Face repository to download the workspace from")
+    download_parser.add_argument("--hf_bucket", default="ProjectNeura/ErbiumOnVast",
+                                 help="The Hugging Face bucket to download the workspace from")
     args = parser.parse_args()
     match args.action:
         case "init":
             initialize(args.node_id, args.hf_token)
         case "upload":
-            upload_workspace(workspace=args.workspace, hf_repo=args.hf_repo)
+            upload_workspace(workspace=args.workspace, hf_bucket=args.hf_bucket)
         case "download":
-            download_workspace(workspace=args.workspace, hf_repo=args.hf_repo)
+            download_workspace(workspace=args.workspace, hf_bucket=args.hf_bucket)

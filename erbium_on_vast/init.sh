@@ -161,7 +161,7 @@ install_uv_and_python_env() {
 
   if ! "${VENV_DIR}/bin/python" -c "import erbium, huggingface_hub, torch, torchvision" >/dev/null 2>&1; then
     log "Installing Python packages"
-    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision huggingface-hub "${ERBIUM_PACKAGE}"
+    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision "huggingface-hub>=1.5.0" "${ERBIUM_PACKAGE}"
   fi
 }
 
