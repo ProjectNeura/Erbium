@@ -731,6 +731,7 @@
           <a href="#join">Join</a>
           <a href="#activeJob">Active job</a>
           <a href="#leave">Leave</a>
+          <a href="#packages">Packages</a>
           <a href="#inventory">Inventory</a>
         </nav>
       </header>
@@ -890,6 +891,26 @@
         </article>
       </section>
 
+      <section class="section" id="packages">
+        <article class="glass-card form-card fade-up">
+          <div class="eyebrow">Node package install</div>
+          <h3>Install apt packages</h3>
+          <p class="form-copy">
+            Install Debian packages directly on the node. Use package names from the apt repositories configured on this host.
+          </p>
+
+          <form id="aptInstallForm">
+            <label>
+              Packages
+              <input id="aptPackages" name="packages" type="text" autocomplete="off" placeholder="git curl htop" required />
+            </label>
+            <div class="help-line">Separate multiple packages with spaces or commas.</div>
+            <button id="aptInstallButton" class="secondary-button" type="submit">Install packages</button>
+            <div class="feedback info" id="aptInstallFeedback">Ready to install packages on the node.</div>
+          </form>
+        </article>
+      </section>
+
       <section class="section" id="support">
         <div class="section-heading fade-up">
           <div>
@@ -998,12 +1019,15 @@
       joinForm: document.getElementById("joinForm"),
       stopForm: document.getElementById("stopForm"),
       leaveForm: document.getElementById("leaveForm"),
+      aptInstallForm: document.getElementById("aptInstallForm"),
       joinButton: document.getElementById("joinButton"),
       stopButton: document.getElementById("stopButton"),
       leaveButton: document.getElementById("leaveButton"),
+      aptInstallButton: document.getElementById("aptInstallButton"),
       joinFeedback: document.getElementById("joinFeedback"),
       stopFeedback: document.getElementById("stopFeedback"),
-      leaveFeedback: document.getElementById("leaveFeedback")
+      leaveFeedback: document.getElementById("leaveFeedback"),
+      aptInstallFeedback: document.getElementById("aptInstallFeedback")
     };
 
     function formatHours(value) {
@@ -1032,6 +1056,13 @@
     function setFeedback(target, type, message) {
       target.className = `feedback ${type}`;
       target.textContent = message;
+    }
+
+    function parsePackageNames(value) {
+      return value
+        .split(/[\s,]+/)
+        .map((packageName) => packageName.trim())
+        .filter(Boolean);
     }
 
     function formatStartedAt(unixSeconds) {
@@ -1129,11 +1160,20 @@
 
     async function fetchJson(url, options) {
       const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
       const text = await response.text();
-      return text ? JSON.parse(text) : null;
+      let payload = null;
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch (error) {
+          payload = text;
+        }
+      }
+      if (!response.ok) {
+        const detail = payload && typeof payload === "object" && payload.detail ? payload.detail : `Request failed with status ${response.status}`;
+        throw new Error(detail);
+      }
+      return payload;
     }
 
     async function refreshAvailability() {
@@ -1284,6 +1324,35 @@
         setFeedback(els.leaveFeedback, "error", "Leave request failed. Retry after the scheduler data refreshes.");
       } finally {
         els.leaveButton.disabled = false;
+      }
+    });
+
+    els.aptInstallForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const packages = parsePackageNames(document.getElementById("aptPackages").value);
+
+      if (!packages.length) {
+        setFeedback(els.aptInstallFeedback, "error", "At least one package name is required.");
+        return;
+      }
+
+      els.aptInstallButton.disabled = true;
+      setFeedback(els.aptInstallFeedback, "info", `Installing ${packages.length} package${packages.length === 1 ? "" : "s"}...`);
+
+      try {
+        const payload = await fetchJson("/apt_install", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ packages })
+        });
+        const installed = payload && Array.isArray(payload.installed) ? payload.installed : packages;
+        setFeedback(els.aptInstallFeedback, "success", `Installed: ${installed.join(", ")}.`);
+        els.aptInstallForm.reset();
+      } catch (error) {
+        setFeedback(els.aptInstallFeedback, "error", error.message || "Package install failed. Check package names and server logs.");
+      } finally {
+        els.aptInstallButton.disabled = false;
       }
     });
 

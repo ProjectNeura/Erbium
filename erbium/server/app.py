@@ -1,8 +1,9 @@
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
+from subprocess import CalledProcessError, run
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -27,7 +28,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -94,3 +95,21 @@ class JobQueryModel(RunningJobModel):
 @app.post("/leave_waitlist")
 async def leave_waitlist(job_query: JobQueryModel) -> dict[str, bool]:
     return {"removed": runtime.get_node().leave_waitlist(job_query.name, job_query.ssh_password)}
+
+
+class AptInstallPackages(BaseModel):
+    packages: list[str]
+
+
+@app.post("/apt_install")
+async def apt_install(packages: AptInstallPackages) -> dict[str, Any]:
+    package_names = [package.strip() for package in packages.packages if package.strip()]
+    if not package_names:
+        raise HTTPException(status_code=400, detail="At least one package is required.")
+
+    try:
+        run(("apt", "install", "-y", *package_names), check=True)
+    except CalledProcessError as error:
+        raise HTTPException(status_code=500, detail="apt install failed.") from error
+
+    return {"installed": package_names}
