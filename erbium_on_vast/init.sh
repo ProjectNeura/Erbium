@@ -154,14 +154,15 @@ install_uv_and_python_env() {
   log "Installing uv for root"
   curl -LsSf https://astral.sh/uv/install.sh | HOME="${ROOT_HOME}" sh
 
-  if [ ! -x "${VENV_DIR}/bin/python" ]; then
+  if [ ! -x "${VENV_DIR}/bin/python" ] || ! "${VENV_DIR}/bin/python" -c "import sys" >/dev/null 2>&1; then
     log "Creating Python virtualenv at ${VENV_DIR}"
+    rm -rf "${VENV_DIR:?}/"* "${VENV_DIR}"/.[!.]* "${VENV_DIR}"/..?*
     HOME="${ROOT_HOME}" "${UV_BIN}" venv --python "${PYTHON_BIN}" "${VENV_DIR}"
   fi
 
-  if ! "${VENV_DIR}/bin/python" -c "import erbium, huggingface_hub, torch, torchvision" >/dev/null 2>&1; then
+  if [ ! -x "${VENV_DIR}/bin/jupyter" ] || ! "${VENV_DIR}/bin/python" -c "import erbium, huggingface_hub, torch, torchvision, jupyterlab, jupyter_server" >/dev/null 2>&1; then
     log "Installing Python packages"
-    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision "huggingface-hub>=1.5.0" "${ERBIUM_PACKAGE}"
+    HOME="${ROOT_HOME}" "${UV_BIN}" pip install --python "${VENV_DIR}/bin/python" torch torchvision jupyterlab "huggingface-hub>=1.5.0" "${ERBIUM_PACKAGE}"
   fi
 }
 
