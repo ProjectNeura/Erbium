@@ -8,6 +8,8 @@ services:
       - erbium_app:/workspace/app
       - erbium_venv:/workspace/venv
       - erbium_pvenvs:/workspace/pvenvs
+      - erbium_codex:/home/access/.codex
+      - erbium_claude:/home/access/.claude
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
@@ -42,10 +44,11 @@ services:
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
+              cp -an /etc/skel/. /home/access/
               groupadd -f video
               groupadd -f render
               usermod -aG video,render access || true
-              chown -R access:access /workspace/app /workspace/output /workspace/venv /workspace/pvenvs /usr/local/lib/node_modules
+              chown -R access:access /home/access /workspace/app /workspace/output /workspace/venv /workspace/pvenvs /usr/local/lib/node_modules
               su - access -c "mkdir -p ~/.claude/skills/use-erbium ~/.codex/skills/use-erbium"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.claude/skills/use-erbium/SKILL.md"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.codex/skills/use-erbium/SKILL.md"
@@ -84,3 +87,5 @@ volumes:
   erbium_app:
   erbium_venv:
   erbium_pvenvs:
+  erbium_codex:
+  erbium_claude:
