@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from erbium.api import create_docker_compose, command_to_start_docker_compose, run_command, command_to_initialize_docker
-from erbium.api.docker.docker_compose import __DEFAULT_BASE_CONTAINER__, __DEFAULT_SHARED_NETWORK__
+from erbium.api.docker.docker_compose import __DEFAULT_BASE_IMAGE__, __DEFAULT_SHARED_NETWORK__
 from erbium.server.run import run_server
 
 
@@ -17,7 +17,7 @@ def __entry__() -> None:
     docker_create = docker_sub.add_parser("create")
     docker_create.add_argument("-n", "--service_name", required=True)
     docker_create.add_argument("-p", "--password", required=True)
-    docker_create.add_argument("-b", "--base_container", default=__DEFAULT_BASE_CONTAINER__)
+    docker_create.add_argument("-b", "--base_image", default=__DEFAULT_BASE_IMAGE__)
     docker_create.add_argument("--gpus", nargs="+", default=["all"], help="List of GPU IDs to use, or \"all\" for all available GPUs")
     docker_create.add_argument("input_dir")
     docker_create.add_argument("output_dir")
@@ -45,10 +45,9 @@ def __entry__() -> None:
                 case "create":
                     with open(args.save_as, "w") as f:
                         f.write(create_docker_compose(
-                            args.service_name, args.password, base_container=args.base_container,
-                            hostname=args.service_name, container_name=args.service_name, input_dir=args.input_dir,
-                            output_dir=args.output_dir, backup_dir=args.backup_dir,
-                            gpus=args.gpus[0] if len(args.gpus) == 1 else args.gpus
+                            args.service_name, args.password, base_image=args.base_image, hostname=args.service_name,
+                            container_name=args.service_name, input_dir=args.input_dir, output_dir=args.output_dir,
+                            backup_dir=args.backup_dir, gpus=args.gpus[0] if len(args.gpus) == 1 else args.gpus
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(

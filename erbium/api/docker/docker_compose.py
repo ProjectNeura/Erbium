@@ -4,7 +4,7 @@ from os.path import exists, abspath
 
 
 __DOCKER_DIR__: str = f"{abspath(__file__)[:-28]}docker".replace("\\", "/")
-__DEFAULT_BASE_CONTAINER__: str = "nvidia/cuda:13.0.0-devel-ubuntu24.04"
+__DEFAULT_BASE_IMAGE__: str = "nvidia/cuda:13.0.0-devel-ubuntu24.04"
 __DEFAULT_HOSTNAME__: str = "erbium"
 __DEFAULT_CONTAINER_NAME__: str = "erbium"
 __DEFAULT_SHARED_NETWORK__: str = "labnet"
@@ -24,7 +24,7 @@ def _set_gpus(gpus: int | str | Sequence[int]) -> str:
 
 __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
     "service_name": ("SERVICE_NAME", lambda x: x),
-    "base_container": (f"image: {__DEFAULT_BASE_CONTAINER__}", lambda x: f"image: {x}"),
+    "base_image": (f"image: {__DEFAULT_BASE_IMAGE__}", lambda x: f"image: {x}"),
     "hostname": (f"hostname: {__DEFAULT_HOSTNAME__}", lambda x: f"hostname: {x}"),
     "container_name": (f"container_name: {__DEFAULT_CONTAINER_NAME__}", lambda x: f"container_name: {x}"),
     "shared_network": (__DEFAULT_SHARED_NETWORK__, lambda x: x),
@@ -37,7 +37,7 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
 }
 
 
-def create_docker_compose(service_name: str, ssh_password: str, *, base_container: str = __DEFAULT_BASE_CONTAINER__,
+def create_docker_compose(service_name: str, ssh_password: str, *, base_image: str = __DEFAULT_BASE_IMAGE__,
                           hostname: str = __DEFAULT_HOSTNAME__, container_name: str = __DEFAULT_CONTAINER_NAME__,
                           shared_network: str = __DEFAULT_SHARED_NETWORK__,
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
