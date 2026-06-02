@@ -14,6 +14,8 @@ __DEFAULT_OUTPUT_DIR__: str = "S:/erbium_output"
 __DEFAULT_BACKUP_DIR__: str = "S:/erbium_backup"
 __DEFAULT_GPU_DRIVER__: str = "nvidia"
 __DEFAULT_GPUS__: str = "all"
+__DEFAULT_CODEX_VOLUME__: str = "erbium_codex"
+__DEFAULT_CLAUDE_VOLUME__: str = "erbium_claude"
 
 
 def _set_gpus(gpus: int | str | Sequence[int]) -> str:
@@ -33,7 +35,9 @@ __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
     "output_dir": (f"- {__DEFAULT_OUTPUT_DIR__}:", lambda x: f"- {x}:"),
     "backup_dir": (f"- {__DEFAULT_BACKUP_DIR__}:", lambda x: f"- {x}:"),
     "gpu_driver": (f"- driver: {__DEFAULT_GPU_DRIVER__}", lambda x: f"- driver: {x}"),
-    "gpus": (f"count: {__DEFAULT_GPUS__}", _set_gpus)
+    "gpus": (f"count: {__DEFAULT_GPUS__}", _set_gpus),
+    "codex_volume": (__DEFAULT_CODEX_VOLUME__, lambda x: x),
+    "claude_volume": (__DEFAULT_CLAUDE_VOLUME__, lambda x: x)
 }
 
 
@@ -43,8 +47,8 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
                           output_dir: str | PathLike[str] = __DEFAULT_OUTPUT_DIR__,
                           backup_dir: str | PathLike[str] = __DEFAULT_BACKUP_DIR__,
-                          gpu_driver: str = __DEFAULT_GPU_DRIVER__,
-                          gpus: int | str | Sequence[int] = __DEFAULT_GPUS__) -> str:
+                          gpu_driver: str = __DEFAULT_GPU_DRIVER__, gpus: int | str | Sequence[int] = __DEFAULT_GPUS__,
+                          codex_volume: str | None = None, claude_volume: str | None = None) -> str:
     """
     We believe you are able to understand what these parameters are for by reading the "docker-compose.yaml" file, so
     we won't go into detail here.
@@ -55,6 +59,10 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
         raise FileNotFoundError(f"Docker Compose template {template_path} not found, check your installation")
     with open(template_path) as f:
         template = f.read()
+    if not codex_volume:
+        codex_volume = f"{__DEFAULT_CODEX_VOLUME__}_{hostname}"
+    if not claude_volume:
+        claude_volume = f"{__DEFAULT_CLAUDE_VOLUME__}_{hostname}"
     for term, (original, replacement) in __TERMS_TO_BE_REPLACED__.items():
         template = template.replace(original, replacement(locals()[term]))
     template = template.replace("./", f"{__DOCKER_DIR__}/")
