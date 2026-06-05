@@ -44,7 +44,7 @@ services:
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
-              cp -an /etc/skel/. /home/access/
+              cp -a /etc/skel/. /home/access/
               groupadd -f video
               groupadd -f render
               usermod -aG video,render access || true
