@@ -41,6 +41,7 @@ services:
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl unzip zip wget git gnupg openssh-server python3.12 python3.12-venv tmux vim borgbackup nodejs npm bubblewrap
               npm i -g @openai/codex @anthropic-ai/claude-code
+              npm update -g @openai/codex @anthropic-ai/claude-code
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
@@ -59,7 +60,7 @@ services:
                 su - access -c "uv venv --python python3.12 /workspace/venv"
               fi
               if [ ! -x /workspace/venv/bin/jupyter ] || ! su - access -c "/workspace/venv/bin/python -c \"import erbium, torch, torchvision, jupyterlab, jupyter_server\"" >/dev/null 2>&1; then
-                su - access -c "uv pip install --python /workspace/venv/bin/python --upgrade torch torchvision jupyterlab jupyterlab-nvdashboard git+https://github.com/ProjectNeura/Erbium"
+                su - access -c "uv pip install --python /workspace/venv/bin/python --upgrade torch torchvision jupyterlab jupyterlab-archive git+https://github.com/ProjectNeura/Erbium"
               fi
               chown root:root /workspace/backup
               chmod 700 /workspace/backup
