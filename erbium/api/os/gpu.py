@@ -31,6 +31,20 @@ def _mem_clock_speed(handle: struct_c_nvmlDevice_t) -> float | None:
         return None
 
 
+def _utilization_percent(handle: struct_c_nvmlDevice_t) -> float:
+    try:
+        return nvmlDeviceGetUtilizationRates(handle).gpu
+    except Exception:
+        return float("nan")
+
+
+def _power_draw_w(handle: struct_c_nvmlDevice_t) -> float:
+    try:
+        return nvmlDeviceGetPowerUsage(handle) / 1000
+    except Exception:
+        return float("nan")
+
+
 def get_all_gpu_info() -> dict[int, GPUInfo]:
     r = {}
     nvmlInit()
@@ -39,8 +53,7 @@ def get_all_gpu_info() -> dict[int, GPUInfo]:
         handle = nvmlDeviceGetHandleByIndex(i)
         mem_info = nvmlDeviceGetMemoryInfo(handle)
         r[i] = GPUInfo(
-            i, nvmlDeviceGetName(handle), nvmlDeviceGetUtilizationRates(handle).gpu,
-            100 * mem_info.used / mem_info.total, nvmlDeviceGetPowerUsage(handle) / 1000,
-            _clock_speed(handle), _mem_clock_speed(handle), mem_info.total / 1073741824
+            i, nvmlDeviceGetName(handle), _utilization_percent(handle), 100 * mem_info.used / mem_info.total,
+            _power_draw_w(handle), _clock_speed(handle), _mem_clock_speed(handle), mem_info.total / 1073741824
         )
     return r
