@@ -60,9 +60,18 @@ cleanup() {
   fi
   rm -f "$output_file" "$output_file.tail"
 }
+
+stop_heartbeat() {
+  if [ -n "$poster_pid" ]; then
+    kill "$poster_pid" >/dev/null 2>&1 || true
+    wait "$poster_pid" >/dev/null 2>&1 || true
+    poster_pid=""
+  fi
+}
+
 trap cleanup EXIT
-trap 'cleanup; exit 130' INT
-trap 'cleanup; exit 143' TERM
+trap 'stop_heartbeat; cleanup; exit 130' INT
+trap 'stop_heartbeat; cleanup; exit 143' TERM
 
 run_command_with_capture() {
   if command -v script >/dev/null 2>&1 && script --version >/dev/null 2>&1; then
@@ -87,5 +96,6 @@ poster_pid="$!"
 run_command_with_capture "$@"
 exit_code="$?"
 
+stop_heartbeat
 post_tail finished "$exit_code"
 exit "$exit_code"

@@ -396,6 +396,16 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     if state not in {"started", "running", "finished", "failed", "idle"}:
         raise HTTPException(status_code=400, detail="Invalid agent state.")
 
+    is_terminal = status.state in {"finished", "failed"}
+    if is_terminal and state in {"running", "idle"}:
+        if update.task is not None:
+            status.task = update.task[-512:]
+        if update.output_chunk is not None:
+            status.latest_output = _clean_agent_output(update.output_chunk)
+        status.updated_at = now
+        _prune_agent_sessions(agent)
+        return asdict(status)
+
     if state == "started":
         status.state = "running"
         status.latest_output = ""
