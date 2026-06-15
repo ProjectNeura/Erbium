@@ -49,6 +49,7 @@ AGENTS: dict[str, str] = {
 MAX_AGENT_OUTPUT_CHARS = 16_000
 MAX_AGENT_SESSIONS = 30
 AGENT_RUNNING_STALE_SECONDS = 15
+AGENT_RUNNING_IDLE_SECONDS = 20
 CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
 SESSION_ID_RE = re.compile(r"[^A-Za-z0-9_.:-]")
@@ -67,6 +68,7 @@ class AgentSessionStatus:
     exit_code: int | None = None
     started_at: float | None = None
     updated_at: float | None = None
+    output_updated_at: float | None = None
     finished_at: float | None = None
 
 
@@ -253,6 +255,15 @@ def _is_stale_running_session(status: AgentSessionStatus, now: float) -> bool:
     return now - status.updated_at > AGENT_RUNNING_STALE_SECONDS
 
 
+def _is_idle_running_session(status: AgentSessionStatus, now: float) -> bool:
+    if status.state != "running" or _is_stale_running_session(status, now):
+        return False
+    last_change = status.output_updated_at or status.started_at
+    if last_change is None:
+        return False
+    return now - last_change > AGENT_RUNNING_IDLE_SECONDS
+
+
 def _session_payload(status: AgentSessionStatus, now: float | None = None) -> dict[str, Any]:
     now = time() if now is None else now
     payload = asdict(status)
@@ -260,8 +271,11 @@ def _session_payload(status: AgentSessionStatus, now: float | None = None) -> di
     payload["latest_output"] = _json_safe_text(payload["latest_output"])
     payload["raw_state"] = status.state
     payload["stale"] = _is_stale_running_session(status, now)
+    payload["idle"] = _is_idle_running_session(status, now)
     if payload["stale"]:
         payload["state"] = "stale"
+    elif payload["idle"]:
+        payload["state"] = "idle"
     return payload
 
 
@@ -426,12 +440,18 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     if state not in {"started", "running", "finished", "failed", "idle"}:
         raise HTTPException(status_code=400, detail="Invalid agent state.")
 
+    def update_output(output_chunk: str) -> None:
+        cleaned_output = _clean_agent_output(output_chunk)
+        if cleaned_output != status.latest_output:
+            status.latest_output = cleaned_output
+            status.output_updated_at = now
+
     is_terminal = status.state in {"finished", "failed"}
     if is_terminal and state in {"running", "idle"}:
         if update.task is not None:
             status.task = _json_safe_text(update.task[-512:])
         if update.output_chunk is not None:
-            status.latest_output = _clean_agent_output(update.output_chunk)
+            update_output(update.output_chunk)
         status.updated_at = now
         _prune_agent_sessions(agent)
         return _session_payload(status, now)
@@ -439,6 +459,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     if state == "started":
         status.state = "running"
         status.latest_output = ""
+        status.output_updated_at = now
         status.exit_code = None
         status.started_at = now
         status.finished_at = None
@@ -454,7 +475,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     if update.task is not None:
         status.task = _json_safe_text(update.task[-512:])
     if update.output_chunk is not None:
-        status.latest_output = _clean_agent_output(update.output_chunk)
+        update_output(update.output_chunk)
     status.updated_at = now
     _prune_agent_sessions(agent)
 
