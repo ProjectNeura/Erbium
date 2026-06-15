@@ -48,6 +48,7 @@ AGENTS: dict[str, str] = {
 }
 MAX_AGENT_OUTPUT_CHARS = 16_000
 MAX_AGENT_SESSIONS = 30
+AGENT_RUNNING_STALE_SECONDS = 15
 CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 SESSION_ID_RE = re.compile(r"[^A-Za-z0-9_.:-]")
 TERMINAL_ROWS = 120
@@ -211,7 +212,7 @@ def _render_terminal_output(output: str) -> str:
 def _clean_agent_output(output: str) -> str:
     output = _render_terminal_output(output)
     output = re.sub(r"\[[?0-9;: ]*[A-Za-z]", "", output)
-    output = "\n".join(line for line in output.splitlines() if not re.search(r"\][0-9;?]*;", line))
+    output = "\n".join(line for line in output.splitlines() if not re.search(r"][0-9;?]*;", line))
     return output[-MAX_AGENT_OUTPUT_CHARS:]
 
 
@@ -237,14 +238,34 @@ def _sorted_sessions(agent: str) -> list[AgentSessionStatus]:
     return sorted(agent_sessions[agent].values(), key=_session_sort_key, reverse=True)
 
 
+def _is_stale_running_session(status: AgentSessionStatus, now: float) -> bool:
+    if status.state != "running":
+        return False
+    if status.updated_at is None:
+        return True
+    return now - status.updated_at > AGENT_RUNNING_STALE_SECONDS
+
+
+def _session_payload(status: AgentSessionStatus, now: float | None = None) -> dict[str, Any]:
+    now = time() if now is None else now
+    payload = asdict(status)
+    payload["raw_state"] = status.state
+    payload["stale"] = _is_stale_running_session(status, now)
+    if payload["stale"]:
+        payload["state"] = "stale"
+    return payload
+
+
 def _agent_payload(agent: str) -> dict[str, Any]:
+    now = time()
     sessions = _sorted_sessions(agent)
+    session_payloads = [_session_payload(session, now) for session in sessions]
     return {
         "agent": agent,
         "display_name": AGENTS[agent],
-        "active_count": sum(1 for session in sessions if session.state == "running"),
-        "sessions": [asdict(session) for session in sessions],
-        "latest_session": asdict(sessions[0]) if sessions else None,
+        "active_count": sum(1 for session in session_payloads if session["state"] == "running"),
+        "sessions": session_payloads,
+        "latest_session": session_payloads[0] if session_payloads else None,
     }
 
 
@@ -380,7 +401,7 @@ async def update_agent_status(agent: str, update: AgentStatusUpdate) -> dict[str
 @app.get("/agent_status/{agent}/{session_id}")
 async def get_agent_session_status(agent: str, session_id: str) -> dict[str, Any]:
     agent = _get_agent_name(agent)
-    return asdict(_get_session(agent, session_id))
+    return _session_payload(_get_session(agent, session_id))
 
 
 @app.post("/agent_status/{agent}/{session_id}")
@@ -404,7 +425,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
             status.latest_output = _clean_agent_output(update.output_chunk)
         status.updated_at = now
         _prune_agent_sessions(agent)
-        return asdict(status)
+        return _session_payload(status, now)
 
     if state == "started":
         status.state = "running"
@@ -428,7 +449,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     status.updated_at = now
     _prune_agent_sessions(agent)
 
-    return asdict(status)
+    return _session_payload(status, now)
 
 
 @app.post("/apt_install")

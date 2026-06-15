@@ -155,6 +155,11 @@
       color: var(--danger);
     }
 
+    .status-pill.stale {
+      border-color: rgba(240, 179, 90, 0.5);
+      color: var(--warning);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -270,6 +275,10 @@
 
     .session-state.failed {
       color: var(--danger);
+    }
+
+    .session-state.stale {
+      color: var(--warning);
     }
 
     .session-task,
@@ -440,7 +449,7 @@
     };
 
     function formatTime(value) {
-      if (!Number.isFinite(Number(value))) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
         return "--";
       }
       return new Date(Number(value) * 1000).toLocaleTimeString([], {

@@ -34,6 +34,8 @@ def __entry__() -> None:
     server_run.add_argument("--host", default="0.0.0.0")
     server_run.add_argument("--max_gpu_utilization", type=float, default=.1)
     server_run.add_argument("--max_run_time_hrs", type=float, default=168)
+    server_run.add_argument("--log_level", default="warning", choices=["critical", "error", "warning", "info", "debug", "trace"])
+    server_run.add_argument("--access_log", action="store_true")
     args = parser.parse_args()
     match args.system:
         case "docker":
@@ -59,4 +61,4 @@ def __entry__() -> None:
                     run_server(args.port, host=args.host, node_kwargs={
                         "max_gpu_utilization": args.max_gpu_utilization,
                         "max_run_time_hrs": args.max_run_time_hrs
-                    })
+                    }, log_level=args.log_level, access_log=args.access_log)
