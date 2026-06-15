@@ -44,3 +44,8 @@ Rules:
 - `nvidia-smi` — confirm you have GPU headroom and no orphan processes.
 - `df -h /workspace` — confirm there's space for checkpoints/outputs.
 - Output path is under `/workspace/output/<project>/`, not the code dir or `/tmp`.
+
+## Agent status dashboards
+
+- Codex and Claude Code CLI sessions are mirrored to local node dashboards at `http://localhost:8000/codex` and `http://localhost:8000/claude`.
+- Avoid printing secrets, tokens, passwords, or private dataset samples in terminal output because the latest output chunk is visible on those dashboards.
