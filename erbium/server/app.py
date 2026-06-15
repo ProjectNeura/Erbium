@@ -50,6 +50,7 @@ MAX_AGENT_OUTPUT_CHARS = 16_000
 MAX_AGENT_SESSIONS = 30
 AGENT_RUNNING_STALE_SECONDS = 15
 CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
+SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
 SESSION_ID_RE = re.compile(r"[^A-Za-z0-9_.:-]")
 TERMINAL_ROWS = 120
 TERMINAL_COLS = 160
@@ -85,7 +86,13 @@ def _terminal_param_values(params: str) -> list[int]:
     return values
 
 
+def _json_safe_text(value: str) -> str:
+    value = SURROGATE_RE.sub("\ufffd", value)
+    return value.encode("utf-8", "replace").decode("utf-8")
+
+
 def _render_terminal_output(output: str) -> str:
+    output = _json_safe_text(output)
     screen: list[list[str]] = [[" "] * TERMINAL_COLS]
     row = 0
     col = 0
@@ -213,7 +220,7 @@ def _clean_agent_output(output: str) -> str:
     output = _render_terminal_output(output)
     output = re.sub(r"\[[?0-9;: ]*[A-Za-z]", "", output)
     output = "\n".join(line for line in output.splitlines() if not re.search(r"][0-9;?]*;", line))
-    return output[-MAX_AGENT_OUTPUT_CHARS:]
+    return _json_safe_text(output[-MAX_AGENT_OUTPUT_CHARS:])
 
 
 def _get_agent_name(agent: str) -> str:
@@ -249,6 +256,8 @@ def _is_stale_running_session(status: AgentSessionStatus, now: float) -> bool:
 def _session_payload(status: AgentSessionStatus, now: float | None = None) -> dict[str, Any]:
     now = time() if now is None else now
     payload = asdict(status)
+    payload["task"] = _json_safe_text(payload["task"])
+    payload["latest_output"] = _json_safe_text(payload["latest_output"])
     payload["raw_state"] = status.state
     payload["stale"] = _is_stale_running_session(status, now)
     if payload["stale"]:
@@ -420,7 +429,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
     is_terminal = status.state in {"finished", "failed"}
     if is_terminal and state in {"running", "idle"}:
         if update.task is not None:
-            status.task = update.task[-512:]
+            status.task = _json_safe_text(update.task[-512:])
         if update.output_chunk is not None:
             status.latest_output = _clean_agent_output(update.output_chunk)
         status.updated_at = now
@@ -443,7 +452,7 @@ def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate
             status.exit_code = update.exit_code
 
     if update.task is not None:
-        status.task = update.task[-512:]
+        status.task = _json_safe_text(update.task[-512:])
     if update.output_chunk is not None:
         status.latest_output = _clean_agent_output(update.output_chunk)
     status.updated_at = now
