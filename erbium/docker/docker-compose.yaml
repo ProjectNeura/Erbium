@@ -47,7 +47,7 @@ services:
               mkdir -p /usr/local/erbium/bin
               ln -sfn /usr/local/bin/agent-status-wrapper.sh /usr/local/erbium/bin/codex
               ln -sfn /usr/local/bin/agent-status-wrapper.sh /usr/local/erbium/bin/claude
-              printf "%s\n" "export PATH=/usr/local/erbium/bin:\$PATH" > /etc/profile.d/erbium-agent-status.sh
+              printf "%s\n" "export PATH=/usr/local/erbium/bin:$$PATH" > /etc/profile.d/erbium-agent-status.sh
               mkdir -p /var/run/sshd
               id -u access >/dev/null 2>&1 || useradd -m -s /bin/bash access
               echo "access:sshpassword" | chpasswd
