@@ -47,14 +47,18 @@ AGENTS: dict[str, str] = {
     "claude": "Claude Code",
 }
 MAX_AGENT_OUTPUT_CHARS = 16_000
-ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+MAX_AGENT_SESSIONS = 30
+CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
+SESSION_ID_RE = re.compile(r"[^A-Za-z0-9_.:-]")
+TERMINAL_ROWS = 120
+TERMINAL_COLS = 160
 
 
 @dataclass
-class AgentRuntimeStatus:
+class AgentSessionStatus:
     agent: str
     display_name: str
+    session_id: str
     state: str = "idle"
     task: str = ""
     latest_output: str = ""
@@ -64,24 +68,216 @@ class AgentRuntimeStatus:
     finished_at: float | None = None
 
 
-agent_statuses: dict[str, AgentRuntimeStatus] = {
-    agent: AgentRuntimeStatus(agent=agent, display_name=display_name)
-    for agent, display_name in AGENTS.items()
-}
+agent_sessions: dict[str, dict[str, AgentSessionStatus]] = {agent: {} for agent in AGENTS}
+
+
+def _terminal_param_values(params: str) -> list[int]:
+    values: list[int] = []
+    for value in params.replace("?", "").split(";"):
+        if not value:
+            values.append(0)
+            continue
+        try:
+            values.append(int(value.split(":", 1)[0]))
+        except ValueError:
+            values.append(0)
+    return values
+
+
+def _render_terminal_output(output: str) -> str:
+    screen: list[list[str]] = [[" "] * TERMINAL_COLS]
+    row = 0
+    col = 0
+    index = 0
+
+    def ensure_row(target: int) -> None:
+        nonlocal row
+        while len(screen) <= target:
+            screen.append([" "] * TERMINAL_COLS)
+        if len(screen) > TERMINAL_ROWS:
+            overflow = len(screen) - TERMINAL_ROWS
+            del screen[:overflow]
+            row = max(0, row - overflow)
+
+    def clear_line(target_row: int, start: int = 0, end: int = TERMINAL_COLS) -> None:
+        ensure_row(target_row)
+        for pos in range(max(0, start), min(TERMINAL_COLS, end)):
+            screen[target_row][pos] = " "
+
+    def skip_until_terminator(start: int, terminators: tuple[str, ...]) -> int:
+        pos = start
+        while pos < len(output):
+            if output[pos] in terminators:
+                return pos + 1
+            if output[pos] == "\x1b" and pos + 1 < len(output) and output[pos + 1] == "\\":
+                return pos + 2
+            pos += 1
+        return len(output)
+
+    def handle_csi(params: str, final: str) -> None:
+        nonlocal row, col, screen
+        values = _terminal_param_values(params)
+        first = values[0] if values else 0
+        amount = first or 1
+
+        if final in {"H", "f"}:
+            row = max(0, (values[0] if len(values) >= 1 and values[0] else 1) - 1)
+            col = max(0, (values[1] if len(values) >= 2 and values[1] else 1) - 1)
+            ensure_row(row)
+            col = min(col, TERMINAL_COLS - 1)
+        elif final == "A":
+            row = max(0, row - amount)
+        elif final == "B":
+            row += amount
+            ensure_row(row)
+        elif final == "C":
+            col = min(TERMINAL_COLS - 1, col + amount)
+        elif final == "D":
+            col = max(0, col - amount)
+        elif final == "G":
+            col = min(TERMINAL_COLS - 1, max(0, amount - 1))
+        elif final == "J":
+            if first in {0, 2, 3}:
+                screen = [[" "] * TERMINAL_COLS]
+                row = 0
+                col = 0
+        elif final == "K":
+            if first == 1:
+                clear_line(row, 0, col + 1)
+            elif first == 2:
+                clear_line(row)
+            else:
+                clear_line(row, col)
+
+    while index < len(output):
+        char = output[index]
+
+        if char == "\x1b":
+            if index + 1 >= len(output):
+                break
+            introducer = output[index + 1]
+            if introducer == "[":
+                match = re.match(r"\x1b\[([0-?]*[ -/]*)?([@-~])", output[index:])
+                if match:
+                    handle_csi(match.group(1) or "", match.group(2))
+                    index += len(match.group(0))
+                    continue
+            if introducer in {"]", "P", "_", "^"}:
+                index = skip_until_terminator(index + 2, ("\x07",))
+                continue
+            index += 2
+            continue
+
+        if char == "\x9b":
+            match = re.match(r"\x9b([0-?]*[ -/]*)?([@-~])", output[index:])
+            if match:
+                handle_csi(match.group(1) or "", match.group(2))
+                index += len(match.group(0))
+                continue
+        if char in {"\x90", "\x9d", "\x9e", "\x9f"}:
+            index = skip_until_terminator(index + 1, ("\x07", "\x9c"))
+            continue
+
+        if char == "\r":
+            col = 0
+        elif char == "\n":
+            row += 1
+            col = 0
+            ensure_row(row)
+        elif char == "\b":
+            col = max(0, col - 1)
+        elif char == "\t":
+            col = min(TERMINAL_COLS - 1, col + (8 - (col % 8)))
+        elif CONTROL_CHAR_RE.match(char):
+            pass
+        else:
+            ensure_row(row)
+            screen[row][col] = char
+            col += 1
+            if col >= TERMINAL_COLS:
+                col = 0
+                row += 1
+                ensure_row(row)
+        index += 1
+
+    lines = ["".join(line).rstrip() for line in screen]
+    while lines and not lines[0]:
+        lines.pop(0)
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n".join(lines)[-MAX_AGENT_OUTPUT_CHARS:]
 
 
 def _clean_agent_output(output: str) -> str:
-    output = ANSI_ESCAPE_RE.sub("", output)
-    output = output.replace("\r", "\n")
-    output = CONTROL_CHAR_RE.sub("", output)
+    output = _render_terminal_output(output)
+    output = re.sub(r"\[[?0-9;: ]*[A-Za-z]", "", output)
+    output = "\n".join(line for line in output.splitlines() if not re.search(r"\][0-9;?]*;", line))
     return output[-MAX_AGENT_OUTPUT_CHARS:]
 
 
-def _get_agent_status(agent: str) -> AgentRuntimeStatus:
-    status = agent_statuses.get(agent.lower())
-    if not status:
+def _get_agent_name(agent: str) -> str:
+    agent = agent.lower()
+    if agent not in AGENTS:
         raise HTTPException(status_code=404, detail="Unknown agent.")
+    return agent
+
+
+def _normalize_session_id(session_id: str) -> str:
+    session_id = SESSION_ID_RE.sub("-", session_id.strip())[:128]
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Session id is required.")
+    return session_id
+
+
+def _session_sort_key(status: AgentSessionStatus) -> float:
+    return status.updated_at or status.started_at or status.finished_at or 0
+
+
+def _sorted_sessions(agent: str) -> list[AgentSessionStatus]:
+    return sorted(agent_sessions[agent].values(), key=_session_sort_key, reverse=True)
+
+
+def _agent_payload(agent: str) -> dict[str, Any]:
+    sessions = _sorted_sessions(agent)
+    return {
+        "agent": agent,
+        "display_name": AGENTS[agent],
+        "active_count": sum(1 for session in sessions if session.state == "running"),
+        "sessions": [asdict(session) for session in sessions],
+        "latest_session": asdict(sessions[0]) if sessions else None,
+    }
+
+
+def _get_or_create_session(agent: str, session_id: str) -> AgentSessionStatus:
+    session_id = _normalize_session_id(session_id)
+    sessions = agent_sessions[agent]
+    if session_id not in sessions:
+        sessions[session_id] = AgentSessionStatus(
+            agent=agent,
+            display_name=AGENTS[agent],
+            session_id=session_id,
+        )
+    return sessions[session_id]
+
+
+def _get_session(agent: str, session_id: str) -> AgentSessionStatus:
+    session_id = _normalize_session_id(session_id)
+    status = agent_sessions[agent].get(session_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Unknown agent session.")
     return status
+
+
+def _prune_agent_sessions(agent: str) -> None:
+    sessions = _sorted_sessions(agent)
+    if len(sessions) <= MAX_AGENT_SESSIONS:
+        return
+
+    keep = {session.session_id for session in sessions[:MAX_AGENT_SESSIONS] if session.state == "running"}
+    keep.update(session.session_id for session in sessions[:MAX_AGENT_SESSIONS - len(keep)])
+    for session in sessions:
+        if session.session_id not in keep and session.state != "running":
+            agent_sessions[agent].pop(session.session_id, None)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -158,6 +354,7 @@ class AptInstallPackages(BaseModel):
 
 class AgentStatusUpdate(BaseModel):
     state: str
+    session_id: str | None = None
     task: str | None = None
     output_chunk: str | None = None
     exit_code: int | None = None
@@ -165,17 +362,35 @@ class AgentStatusUpdate(BaseModel):
 
 @app.get("/agent_status")
 async def get_agent_statuses() -> dict[str, Any]:
-    return {agent: asdict(status) for agent, status in agent_statuses.items()}
+    return {agent: _agent_payload(agent) for agent in AGENTS}
 
 
 @app.get("/agent_status/{agent}")
 async def get_agent_status(agent: str) -> dict[str, Any]:
-    return asdict(_get_agent_status(agent))
+    return _agent_payload(_get_agent_name(agent))
 
 
 @app.post("/agent_status/{agent}")
 async def update_agent_status(agent: str, update: AgentStatusUpdate) -> dict[str, Any]:
-    status = _get_agent_status(agent)
+    agent = _get_agent_name(agent)
+    session_id = update.session_id or "default"
+    return _update_agent_session(agent, session_id, update)
+
+
+@app.get("/agent_status/{agent}/{session_id}")
+async def get_agent_session_status(agent: str, session_id: str) -> dict[str, Any]:
+    agent = _get_agent_name(agent)
+    return asdict(_get_session(agent, session_id))
+
+
+@app.post("/agent_status/{agent}/{session_id}")
+async def update_agent_session_status(agent: str, session_id: str, update: AgentStatusUpdate) -> dict[str, Any]:
+    agent = _get_agent_name(agent)
+    return _update_agent_session(agent, session_id, update)
+
+
+def _update_agent_session(agent: str, session_id: str, update: AgentStatusUpdate) -> dict[str, Any]:
+    status = _get_or_create_session(agent, session_id)
     now = time()
     state = update.state.strip().lower()
     if state not in {"started", "running", "finished", "failed", "idle"}:
@@ -201,6 +416,7 @@ async def update_agent_status(agent: str, update: AgentStatusUpdate) -> dict[str
     if update.output_chunk is not None:
         status.latest_output = _clean_agent_output(update.output_chunk)
     status.updated_at = now
+    _prune_agent_sessions(agent)
 
     return asdict(status)
 

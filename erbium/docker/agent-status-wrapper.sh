@@ -15,6 +15,8 @@ real_cmd="${ERBIUM_REAL_COMMAND:-/usr/local/bin/$agent}"
 poster="${ERBIUM_AGENT_STATUS_POSTER:-/usr/local/bin/agent-status-post.py}"
 tail_bytes="${ERBIUM_AGENT_STATUS_TAIL_BYTES:-12000}"
 poll_interval="${ERBIUM_AGENT_STATUS_INTERVAL:-1}"
+host_name="$(hostname 2>/dev/null || echo node)"
+session_id="${ERBIUM_AGENT_SESSION_ID:-$agent-$host_name-$$-$(date +%s)}"
 
 if [ ! -x "$real_cmd" ]; then
   echo "agent-status-wrapper: real command not found at $real_cmd" >&2
@@ -34,7 +36,7 @@ post_status() {
   local state="$1"
   local exit_code="${2:-}"
   local input_file="${3:-/dev/null}"
-  local args=(--agent "$agent" --state "$state" --task "$task")
+  local args=(--agent "$agent" --session-id "$session_id" --state "$state" --task "$task")
 
   if [ -n "$exit_code" ]; then
     args+=(--exit-code "$exit_code")

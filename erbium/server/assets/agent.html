@@ -18,6 +18,7 @@
       --warning: #f0b35a;
       --danger: #ff7a62;
       --code: #070a0d;
+      --selected: #223344;
     }
 
     * {
@@ -162,6 +163,7 @@
     }
 
     .metric,
+    .sessions-panel,
     .output-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -187,6 +189,96 @@
       overflow-wrap: anywhere;
       font-size: 1rem;
       font-weight: 650;
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .sessions-panel {
+      overflow: hidden;
+    }
+
+    .sessions-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-strong);
+    }
+
+    .sessions-header strong {
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .sessions-list {
+      display: grid;
+      max-height: 62vh;
+      overflow: auto;
+    }
+
+    .session-button {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      padding: 12px 14px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .session-button:hover,
+    .session-button.selected {
+      background: var(--selected);
+    }
+
+    .session-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .session-title strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.92rem;
+    }
+
+    .session-state {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .session-state.running {
+      color: var(--accent);
+    }
+
+    .session-state.finished {
+      color: var(--success);
+    }
+
+    .session-state.failed {
+      color: var(--danger);
+    }
+
+    .session-task,
+    .session-time {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 0.78rem;
     }
 
     .output-panel {
@@ -253,6 +345,14 @@
         max-height: 64vh;
         font-size: 0.82rem;
       }
+
+      .workbench {
+        grid-template-columns: 1fr;
+      }
+
+      .sessions-list {
+        max-height: 240px;
+      }
     }
   </style>
 </head>
@@ -300,17 +400,31 @@
       </article>
     </section>
 
-    <section class="output-panel" aria-labelledby="outputHeading">
-      <div class="output-header">
-        <strong id="outputHeading">Latest output</strong>
-        <span class="meta" id="outputSize">0 chars</span>
-      </div>
-      <pre id="latestOutput"><span class="empty">No output captured yet.</span></pre>
+    <section class="workbench">
+      <aside class="sessions-panel" aria-labelledby="sessionsHeading">
+        <div class="sessions-header">
+          <strong id="sessionsHeading">Sessions</strong>
+          <span class="meta" id="sessionCount">0 recorded</span>
+        </div>
+        <div class="sessions-list" id="sessionsList" aria-live="polite"></div>
+      </aside>
+
+      <section class="output-panel" aria-labelledby="outputHeading">
+        <div class="output-header">
+          <strong id="outputHeading">Latest output</strong>
+          <span class="meta" id="outputSize">0 chars</span>
+        </div>
+        <pre id="latestOutput"><span class="empty">No output captured yet.</span></pre>
+      </section>
     </section>
   </main>
 
   <script>
     const agent = (location.pathname.replace(/^\/+/, "").split("/")[0] || "codex").toLowerCase();
+    const state = {
+      selectedSessionId: null,
+      selectedWasExplicit: false
+    };
     const els = {
       agentTitle: document.getElementById("agentTitle"),
       taskLine: document.getElementById("taskLine"),
@@ -320,7 +434,9 @@
       finishedAt: document.getElementById("finishedAt"),
       exitCode: document.getElementById("exitCode"),
       latestOutput: document.getElementById("latestOutput"),
-      outputSize: document.getElementById("outputSize")
+      outputSize: document.getElementById("outputSize"),
+      sessionsList: document.getElementById("sessionsList"),
+      sessionCount: document.getElementById("sessionCount")
     };
 
     function formatTime(value) {
@@ -334,15 +450,72 @@
       });
     }
 
-    function render(payload) {
-      const state = payload.state || "idle";
+    function formatSessionLabel(session) {
+      return session.session_id || "default";
+    }
+
+    function chooseSelectedSession(sessions) {
+      if (!sessions.length) {
+        state.selectedSessionId = null;
+        state.selectedWasExplicit = false;
+        return null;
+      }
+      const stillExists = sessions.some((session) => session.session_id === state.selectedSessionId);
+      if (state.selectedWasExplicit && stillExists) {
+        return sessions.find((session) => session.session_id === state.selectedSessionId);
+      }
+      const running = sessions.find((session) => session.state === "running");
+      const selected = running || sessions[0];
+      state.selectedSessionId = selected.session_id;
+      state.selectedWasExplicit = false;
+      return selected;
+    }
+
+    function renderSessions(sessions) {
+      els.sessionCount.textContent = `${sessions.length} recorded`;
+      if (!sessions.length) {
+        els.sessionsList.innerHTML = '<div class="session-button empty">No sessions have reported yet.</div>';
+        return;
+      }
+
+      els.sessionsList.innerHTML = sessions.map((session) => `
+        <button class="session-button ${session.session_id === state.selectedSessionId ? "selected" : ""}" type="button" data-session-id="${encodeURIComponent(session.session_id)}">
+          <span class="session-title">
+            <strong>${escapeHtml(formatSessionLabel(session))}</strong>
+            <span class="session-state ${escapeHtml(session.state || "idle")}">${escapeHtml(session.state || "idle")}</span>
+          </span>
+          <span class="session-task">${escapeHtml(session.task || "No task recorded")}</span>
+          <span class="session-time">Updated ${escapeHtml(formatTime(session.updated_at))}</span>
+        </button>
+      `).join("");
+
+      els.sessionsList.querySelectorAll("[data-session-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.selectedSessionId = decodeURIComponent(button.dataset.sessionId || "");
+          state.selectedWasExplicit = true;
+          refresh();
+        });
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderDetail(payload, displayName) {
+      const currentState = payload.state || "idle";
       const output = payload.latest_output || "";
 
-      document.title = `${payload.display_name || agent} - Erbium`;
-      els.agentTitle.textContent = payload.display_name || agent;
+      document.title = `${displayName || payload.display_name || agent} - Erbium`;
+      els.agentTitle.textContent = displayName || payload.display_name || agent;
       els.taskLine.textContent = payload.task || "No task has been recorded yet.";
-      els.statePill.textContent = state;
-      els.statePill.className = `status-pill ${state}`;
+      els.statePill.textContent = currentState;
+      els.statePill.className = `status-pill ${currentState}`;
       els.startedAt.textContent = formatTime(payload.started_at);
       els.updatedAt.textContent = formatTime(payload.updated_at);
       els.finishedAt.textContent = formatTime(payload.finished_at);
@@ -357,13 +530,41 @@
       }
     }
 
+    function renderEmpty(displayName) {
+      document.title = `${displayName || agent} - Erbium`;
+      els.agentTitle.textContent = displayName || agent;
+      els.taskLine.textContent = "No task has been recorded yet.";
+      els.statePill.textContent = "Idle";
+      els.statePill.className = "status-pill idle";
+      els.startedAt.textContent = "--";
+      els.updatedAt.textContent = "--";
+      els.finishedAt.textContent = "--";
+      els.exitCode.textContent = "--";
+      els.outputSize.textContent = "0 chars";
+      els.latestOutput.innerHTML = '<span class="empty">No output captured yet.</span>';
+    }
+
     async function refresh() {
       try {
         const response = await fetch(`/agent_status/${agent}`, { cache: "no-store" });
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
         }
-        render(await response.json());
+        const payload = await response.json();
+        const sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+        const selected = chooseSelectedSession(sessions);
+        renderSessions(sessions);
+
+        if (!selected) {
+          renderEmpty(payload.display_name);
+          return;
+        }
+
+        const detailResponse = await fetch(`/agent_status/${agent}/${encodeURIComponent(selected.session_id)}`, { cache: "no-store" });
+        if (!detailResponse.ok) {
+          throw new Error(`Session request failed with status ${detailResponse.status}`);
+        }
+        renderDetail(await detailResponse.json(), payload.display_name);
       } catch (error) {
         els.taskLine.textContent = "Status endpoint unavailable.";
         els.statePill.textContent = "Offline";
