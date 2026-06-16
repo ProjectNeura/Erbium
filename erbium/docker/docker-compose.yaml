@@ -72,7 +72,7 @@ services:
                 su - access -c "uv venv --python python3.12 /workspace/venv"
               fi
               if [ ! -x /workspace/venv/bin/jupyter ] || ! su - access -c "/workspace/venv/bin/python -c \"import erbium, torch, torchvision, jupyterlab, jupyter_server\"" >/dev/null 2>&1; then
-                su - access -c "uv pip install --python /workspace/venv/bin/python --upgrade torch torchvision jupyterlab jupyterlab-archive git+https://github.com/ProjectNeura/Erbium"
+                su - access -c "uv pip install --python /workspace/venv/bin/python --upgrade torch torchvision jupyterlab jupyter-archive git+https://github.com/ProjectNeura/Erbium"
               fi
               # ERBIUM_BACKUP_SECTION_START
               chown root:root /workspace/backup
