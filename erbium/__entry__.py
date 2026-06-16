@@ -19,10 +19,9 @@ def __entry__() -> None:
     docker_create.add_argument("-p", "--password", required=True)
     docker_create.add_argument("-b", "--base_image", default=__DEFAULT_BASE_IMAGE__)
     docker_create.add_argument("--gpus", nargs="+", default=["all"], help="List of GPU IDs to use, or \"all\" for all available GPUs")
-    docker_create.add_argument("input_dir")
-    docker_create.add_argument("output_dir")
-    docker_create.add_argument("backup_dir")
-    docker_create.add_argument("save_as")
+    docker_create.add_argument("--no-backup", action="store_true", help="Disable automatic Borg backups for the output directory")
+    docker_create.add_argument("paths", nargs="+",
+                               help="INPUT_DIR OUTPUT_DIR BACKUP_DIR SAVE_AS, or INPUT_DIR OUTPUT_DIR SAVE_AS with --no-backup")
     docker_run = docker_sub.add_parser("run")
     docker_run.add_argument("profile_path")
     docker_run.add_argument("service_name")
@@ -45,11 +44,22 @@ def __entry__() -> None:
                         run_command(command_to_initialize_docker(f.read().strip(), protocol=args.protocol,
                                                                  shared_network=args.shared_network))
                 case "create":
-                    with open(args.save_as, "w") as f:
+                    expected_path_count = 3 if args.no_backup else 4
+                    if len(args.paths) != expected_path_count:
+                        docker_create.error(
+                            f"expected {expected_path_count} path arguments when "
+                            f"{'--no-backup is set' if args.no_backup else '--no-backup is not set'}"
+                        )
+                    if args.no_backup:
+                        input_dir, output_dir, save_as = args.paths
+                        backup_dir = None
+                    else:
+                        input_dir, output_dir, backup_dir, save_as = args.paths
+                    with open(save_as, "w") as f:
                         f.write(create_docker_compose(
                             args.service_name, args.password, base_image=args.base_image, hostname=args.service_name,
-                            container_name=args.service_name, input_dir=args.input_dir, output_dir=args.output_dir,
-                            backup_dir=args.backup_dir, gpus=args.gpus[0] if len(args.gpus) == 1 else args.gpus
+                            container_name=args.service_name, input_dir=input_dir, output_dir=output_dir,
+                            backup_dir=backup_dir, gpus=args.gpus[0] if len(args.gpus) == 1 else args.gpus
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(

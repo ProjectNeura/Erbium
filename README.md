@@ -83,6 +83,12 @@ python -m erbium docker init
 python -m erbium docker create -n ${SERVICE_NAME} -p ${SSH_PASSWORD} ${INPUT_DIR} ${OUTPUT_DIR} ${BACKUP_DIR} ./docker-compose.yaml
 ```
 
+To disable automatic output backups, omit `BACKUP_DIR` and pass `--no-backup`:
+
+```shell
+python -m erbium docker create -n ${SERVICE_NAME} -p ${SSH_PASSWORD} --no-backup ${INPUT_DIR} ${OUTPUT_DIR} ./docker-compose.yaml
+```
+
 ### Start the Docker Container
 
 ```shell

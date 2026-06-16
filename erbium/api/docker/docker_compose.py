@@ -16,12 +16,29 @@ __DEFAULT_GPU_DRIVER__: str = "nvidia"
 __DEFAULT_GPUS__: str = "all"
 __DEFAULT_CODEX_VOLUME__: str = "erbium_codex"
 __DEFAULT_CLAUDE_VOLUME__: str = "erbium_claude"
+__BACKUP_SECTION_START__: str = "# ERBIUM_BACKUP_SECTION_START"
+__BACKUP_SECTION_END__: str = "# ERBIUM_BACKUP_SECTION_END"
 
 
 def _set_gpus(gpus: int | str | Sequence[int]) -> str:
     if isinstance(gpus, (int, str)):
         return f"count: {gpus}"
     return f"device_ids: {list(map(str, gpus))}"
+
+
+def _set_backup_enabled(template: str, enabled: bool) -> str:
+    lines = []
+    skipping_backup_section = False
+    for line in template.splitlines():
+        if line.strip() == __BACKUP_SECTION_START__:
+            skipping_backup_section = not enabled
+            continue
+        if line.strip() == __BACKUP_SECTION_END__:
+            skipping_backup_section = False
+            continue
+        if not skipping_backup_section:
+            lines.append(line)
+    return "\n".join(lines) + ("\n" if template.endswith("\n") else "")
 
 
 __TERMS_TO_BE_REPLACED__: dict[str, tuple[str, Callable[[Any], str]]] = {
@@ -46,7 +63,7 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
                           shared_network: str = __DEFAULT_SHARED_NETWORK__,
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
                           output_dir: str | PathLike[str] = __DEFAULT_OUTPUT_DIR__,
-                          backup_dir: str | PathLike[str] = __DEFAULT_BACKUP_DIR__,
+                          backup_dir: str | PathLike[str] | None = __DEFAULT_BACKUP_DIR__,
                           gpu_driver: str = __DEFAULT_GPU_DRIVER__, gpus: int | str | Sequence[int] = __DEFAULT_GPUS__,
                           codex_volume: str | None = None, claude_volume: str | None = None) -> str:
     """
@@ -63,7 +80,13 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
         codex_volume = f"{__DEFAULT_CODEX_VOLUME__}_{hostname}"
     if not claude_volume:
         claude_volume = f"{__DEFAULT_CLAUDE_VOLUME__}_{hostname}"
+    backup_enabled = backup_dir is not None
+    template = _set_backup_enabled(template, backup_enabled)
+    if not backup_enabled:
+        template = template.replace(" borgbackup ", " ")
     for term, (original, replacement) in __TERMS_TO_BE_REPLACED__.items():
+        if term == "backup_dir" and not backup_enabled:
+            continue
         template = template.replace(original, replacement(locals()[term]))
     template = template.replace("./", f"{__DOCKER_DIR__}/")
     return template
