@@ -8,8 +8,8 @@ from typing import TextIO
 from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
 
-from erbium.api.os.cpu import get_all_cpu_info
-from erbium.api.os.gpu import get_all_gpu_info
+from erbium.api.os.cpu import get_all_cpu_info, CPUInfo
+from erbium.api.os.gpu import get_all_gpu_info, GPUInfo
 
 
 class ResourceMonitor(object):
@@ -22,10 +22,10 @@ class ResourceMonitor(object):
         self._interval: float = interval
         self._process: Process = Process(target=self._run, name="Resource Monitor", daemon=True)
         self._timestamps: list[datetime] = []
-        self._cpu_names: dict[int, str] = {device: info.name for device, info in get_all_cpu_info().items()}
+        self._cpu_infos: dict[int, CPUInfo] = get_all_cpu_info()
         self._cpu_util: dict[int, list[float]] = defaultdict(list)
         self._cpu_mem_util: dict[int, list[float]] = defaultdict(list)
-        self._gpu_names: dict[int, str] = {device: info.name for device, info in get_all_gpu_info().items()}
+        self._gpu_infos: dict[int, GPUInfo] = get_all_gpu_info()
         self._gpu_util: dict[int, list[float]] = defaultdict(list)
         self._gpu_mem_util: dict[int, list[float]] = defaultdict(list)
 
@@ -42,19 +42,19 @@ class ResourceMonitor(object):
         for device, values in sorted(self._cpu_util.items()):
             if values:
                 xs = self._timestamps[-len(values):]
-                ax.plot(xs, values, label=f"CPU {device} {self._cpu_names.get(device, '')} utilization")
+                ax.plot(xs, values, label=f"CPU {device} {self._cpu_infos[device].name} utilization")
         for device, values in sorted(self._cpu_mem_util.items()):
             if values:
                 xs = self._timestamps[-len(values):]
-                ax.plot(xs, values, linestyle="--", label=f"CPU {device} memory utilization")
+                ax.plot(xs, values, linestyle="--", label=f"CPU {device} memory utilization ({self._cpu_infos[device].total_memory_gb} GB)")
         for device, values in sorted(self._gpu_util.items()):
             if values:
                 xs = self._timestamps[-len(values):]
-                ax.plot(xs, values, label=f"GPU {device} {self._gpu_names.get(device, '')} utilization")
+                ax.plot(xs, values, label=f"GPU {device} {self._gpu_infos[device].name} utilization")
         for device, values in sorted(self._gpu_mem_util.items()):
             if values:
                 xs = self._timestamps[-len(values):]
-                ax.plot(xs, values, linestyle="--", label=f"GPU {device} memory utilization")
+                ax.plot(xs, values, linestyle="--", label=f"GPU {device} memory utilization ({self._gpu_infos[device].total_memory_gb} GB)")
         ax.set_xlabel("Time")
         ax.set_ylabel("Utilization (%)")
         ax.set_ylim(0, 100)
@@ -85,8 +85,8 @@ class ResourceMonitor(object):
                 f.write(f"Duration (s): {(end - start).total_seconds():.2f}\n\n")
             else:
                 f.write("No samples collected.\n\n")
-            self._write_device_section(f, "CPUs", self._cpu_names, self._cpu_util, self._cpu_mem_util)
-            self._write_device_section(f, "GPUs", self._gpu_names, self._gpu_util, self._gpu_mem_util)
+            self._write_device_section(f, "CPUs", {device: info.name for device, info in self._cpu_infos.items()}, self._cpu_util, self._cpu_mem_util)
+            self._write_device_section(f, "GPUs", {device: info.name for device, info in self._gpu_infos.items()}, self._gpu_util, self._gpu_mem_util)
 
     @staticmethod
     def _summarize(values: list[float]) -> tuple[float, float, float] | None:
@@ -128,11 +128,9 @@ class ResourceMonitor(object):
         while True:
             self._timestamps.append(datetime.now())
             for device, info in get_all_cpu_info().items():
-                self._cpu_names[device] = info.name
                 self._cpu_util[device].append(info.utilization_percent)
                 self._cpu_mem_util[device].append(info.memory_utilization_percent)
             for device, info in get_all_gpu_info().items():
-                self._gpu_names[device] = info.name
                 self._gpu_util[device].append(info.utilization_percent)
                 self._gpu_mem_util[device].append(info.memory_utilization_percent)
             self.make_plots(f"{self._report_dir}/{self._timestamps[0].strftime('%Y-%m-%d_%H:%M:%S')}.png")
