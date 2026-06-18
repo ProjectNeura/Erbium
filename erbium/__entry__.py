@@ -59,7 +59,7 @@ def __entry__() -> None:
                         f.write(create_docker_compose(
                             args.service_name, args.password, base_image=args.base_image, hostname=args.service_name,
                             container_name=args.service_name, input_dir=input_dir, output_dir=output_dir,
-                            backup_dir=backup_dir, gpus=args.gpus[0] if len(args.gpus) == 1 else args.gpus
+                            backup_dir=backup_dir, gpus=args.gpus
                         ))
                 case "run":
                     run_command(command_to_start_docker_compose(

@@ -20,10 +20,38 @@ __BACKUP_SECTION_START__: str = "# ERBIUM_BACKUP_SECTION_START"
 __BACKUP_SECTION_END__: str = "# ERBIUM_BACKUP_SECTION_END"
 
 
-def _set_gpus(gpus: int | str | Sequence[int]) -> str:
-    if isinstance(gpus, (int, str)):
-        return f"count: {gpus}"
-    return f"device_ids: {list(map(str, gpus))}"
+def _gpu_device_ids(gpus: int | str | Sequence[int | str]) -> list[str] | None:
+    if isinstance(gpus, int):
+        return None
+    if isinstance(gpus, str):
+        value = gpus.strip()
+        if value.lower() == "all":
+            return None
+        return [device_id.strip() for device_id in value.split(",") if device_id.strip()]
+
+    device_ids = [str(device_id).strip() for device_id in gpus]
+    if len(device_ids) == 1 and device_ids[0].lower() == "all":
+        return None
+    return device_ids
+
+
+def _set_gpus(gpus: int | str | Sequence[int | str]) -> str:
+    device_ids = _gpu_device_ids(gpus)
+    if device_ids is None:
+        if isinstance(gpus, str):
+            count = gpus.strip()
+        elif isinstance(gpus, Sequence):
+            count = str(gpus[0]).strip()
+        else:
+            count = str(gpus)
+        return f"count: {count}"
+    return f"device_ids: {device_ids}"
+
+
+def _set_nvidia_visible_devices(gpus: int | str | Sequence[int | str]) -> str:
+    device_ids = _gpu_device_ids(gpus)
+    visible_devices = ",".join(device_ids) if device_ids is not None else "all"
+    return f"NVIDIA_VISIBLE_DEVICES: {visible_devices}"
 
 
 def _set_backup_enabled(template: str, enabled: bool) -> str:
@@ -64,7 +92,7 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
                           input_dir: str | PathLike[str] = __DEFAULT_INPUT_DIR__,
                           output_dir: str | PathLike[str] = __DEFAULT_OUTPUT_DIR__,
                           backup_dir: str | PathLike[str] | None = __DEFAULT_BACKUP_DIR__,
-                          gpu_driver: str = __DEFAULT_GPU_DRIVER__, gpus: int | str | Sequence[int] = __DEFAULT_GPUS__,
+                          gpu_driver: str = __DEFAULT_GPU_DRIVER__, gpus: int | str | Sequence[int | str] = __DEFAULT_GPUS__,
                           codex_volume: str | None = None, claude_volume: str | None = None) -> str:
     """
     We believe you are able to understand what these parameters are for by reading the "docker-compose.yaml" file, so
@@ -88,6 +116,7 @@ def create_docker_compose(service_name: str, ssh_password: str, *, base_image: s
         if term == "backup_dir" and not backup_enabled:
             continue
         template = template.replace(original, replacement(locals()[term]))
+    template = template.replace(f"NVIDIA_VISIBLE_DEVICES: {__DEFAULT_GPUS__}", _set_nvidia_visible_devices(gpus))
     template = template.replace("./", f"{__DOCKER_DIR__}/")
     return template
 
