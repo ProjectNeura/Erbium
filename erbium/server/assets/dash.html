@@ -574,6 +574,39 @@
       padding-left: 18px;
     }
 
+    .command-panel {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .command-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #607083;
+    }
+
+    .command-code {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(17, 24, 39, 0.94);
+      color: #f9fafb;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      white-space: pre;
+    }
+
+    .command-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
     .table-card {
       margin-top: 20px;
       overflow: hidden;
@@ -732,6 +765,7 @@
           <a href="#activeJob">Active job</a>
           <a href="#leave">Leave</a>
           <a href="#packages">Packages</a>
+          <a href="#support">Support</a>
           <a href="#inventory">Inventory</a>
         </nav>
       </header>
@@ -951,6 +985,18 @@
               <li>If the job has already started running, it is no longer in the queue and cannot be removed here.</li>
             </ul>
           </article>
+
+          <article class="support-card fade-up delay-3">
+            <h3>Transfer files with SCP</h3>
+            <p class="support-copy">Use Cloudflare Tunnel as the SSH proxy when copying files to or from the active node.</p>
+            <div class="command-panel">
+              <div class="command-label">Upload to node</div>
+              <code class="command-code" id="scpUploadCommand">scp -o ProxyCommand="cloudflared access ssh --hostname %h" ./local-file access@&lt;node-host&gt;:/workspace/output/</code>
+              <div class="command-label">Download from node</div>
+              <code class="command-code" id="scpDownloadCommand">scp -o ProxyCommand="cloudflared access ssh --hostname %h" access@&lt;node-host&gt;:/workspace/output/remote-file ./</code>
+              <p class="command-note" id="scpHostNote">Replace <code>&lt;node-host&gt;</code> with the SSH tunnel host, such as <code>4090a-erbium.projectneura.org</code>. Use the SSH password from your active job. The upload example uses <code>/workspace/output/</code> because it is writable and backed up.</p>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -1027,7 +1073,10 @@
       joinFeedback: document.getElementById("joinFeedback"),
       stopFeedback: document.getElementById("stopFeedback"),
       leaveFeedback: document.getElementById("leaveFeedback"),
-      aptInstallFeedback: document.getElementById("aptInstallFeedback")
+      aptInstallFeedback: document.getElementById("aptInstallFeedback"),
+      scpUploadCommand: document.getElementById("scpUploadCommand"),
+      scpDownloadCommand: document.getElementById("scpDownloadCommand"),
+      scpHostNote: document.getElementById("scpHostNote")
     };
 
     function formatHours(value) {
@@ -1063,6 +1112,27 @@
         .split(/[\s,]+/)
         .map((packageName) => packageName.trim())
         .filter(Boolean);
+    }
+
+    function resolveSshTunnelHost() {
+      const hostname = window.location.hostname;
+      if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
+        return "<node-host>";
+      }
+      return hostname;
+    }
+
+    function renderScpCommands() {
+      const host = resolveSshTunnelHost();
+      els.scpUploadCommand.textContent = `scp -o ProxyCommand="cloudflared access ssh --hostname %h" ./local-file access@${host}:/workspace/output/`;
+      els.scpDownloadCommand.textContent = `scp -o ProxyCommand="cloudflared access ssh --hostname %h" access@${host}:/workspace/output/remote-file ./`;
+
+      if (host === "<node-host>") {
+        els.scpHostNote.innerHTML = 'Replace <code>&lt;node-host&gt;</code> with the SSH tunnel host, such as <code>4090a-erbium.projectneura.org</code>. Use the SSH password from your active job. The upload example uses <code>/workspace/output/</code> because it is writable and backed up.';
+        return;
+      }
+
+      els.scpHostNote.innerHTML = `SSH tunnel host: <code>${escapeHtml(host)}</code>. Use the SSH password from your active job and run SCP on a machine with <code>cloudflared</code> installed. The upload example uses <code>/workspace/output/</code> because it is writable and backed up.`;
     }
 
     function formatStartedAt(unixSeconds) {
@@ -1356,6 +1426,7 @@
       }
     });
 
+    renderScpCommands();
     refreshAll();
     state.refreshTimer = window.setInterval(refreshAll, 15000);
   </script>
