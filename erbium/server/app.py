@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from erbium.api import Node, Job, get_all_gpu_info
+from erbium.server.availability import availability_payload
 
 
 @dataclass
@@ -354,9 +355,7 @@ async def waitlist() -> dict[str, Any]:
 
 @app.get("/availability")
 async def availability() -> dict[str, Any]:
-    return {info.name: {
-        "available": runtime.get_node().is_available(info), **asdict(info)
-    } for device_id, info in get_all_gpu_info().items()}
+    return availability_payload(runtime.get_node(), get_all_gpu_info())
 
 
 class JobModel(BaseModel):
