@@ -1119,7 +1119,7 @@
       if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
         return "<node-host>";
       }
-      return hostname;
+      return hostname.replace(/^node-/, "");
     }
 
     function renderScpCommands() {
