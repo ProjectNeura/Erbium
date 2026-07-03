@@ -65,7 +65,7 @@ services:
               groupadd -f video
               groupadd -f render
               usermod -aG video,render access || true
-              chown access:access /home/access /workspace/app /workspace/output /workspace/venv /workspace/pvenvs /usr/local/lib/node_modules
+              chown access:access /home/access /workspace/app /workspace/output /workspace/venv /workspace/pvenvs
               chown -R access:access /home/access/.codex /home/access/.claude
               su - access -c "mkdir -p ~/.claude/skills/use-erbium ~/.codex/skills/use-erbium"
               su - access -c "ln -sfn /opt/erbium-skills/use-erbium/SKILL.md ~/.claude/skills/use-erbium/SKILL.md"

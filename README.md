@@ -79,6 +79,8 @@ python -m erbium docker init
 
 ### Build a Docker Image
 
+> This step is required if you want to update Erbium
+
 ```shell
 python -m erbium docker create -n ${SERVICE_NAME} -p ${SSH_PASSWORD} ${INPUT_DIR} ${OUTPUT_DIR} ${BACKUP_DIR} ./docker-compose.yaml
 ```
@@ -90,6 +92,8 @@ python -m erbium docker create -n ${SERVICE_NAME} -p ${SSH_PASSWORD} --no-backup
 ```
 
 ### Start the Docker Container
+
+> This step is required if you want to update Erbium
 
 ```shell
 python -m erbium docker run ./docker-compose.yaml ${SERVICE_NAME}
