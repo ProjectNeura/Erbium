@@ -13,7 +13,7 @@ services:
       - ./motd:/etc/motd:ro
       - ./venv.sh:/etc/profile.d/venv.sh:ro
       # ERBIUM_BACKUP_SECTION_START
-      - ./backup-output.sh:/usr/local/bin/backup-output.sh:ro
+      - ./backup-output.sh:/workspace/backup-output.sh:ro
       # ERBIUM_BACKUP_SECTION_END
       - ./skills:/opt/erbium-skills:ro
       - S:/erbium_input:/workspace/input:ro
@@ -76,7 +76,7 @@ services:
               fi
               (
                 while true; do
-                /usr/local/bin/backup-output.sh || true
+                /workspace/backup-output.sh || true
                 sleep 43200
                 done
               ) &
